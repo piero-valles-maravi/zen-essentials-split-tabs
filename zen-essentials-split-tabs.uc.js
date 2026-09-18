@@ -94,11 +94,15 @@
      se lee y se retoca de un vistazo, y chrome.css se queda con cuatro
      reglas genéricas que leen estas variables. */
   const DISENOS = {
-    // rejilla: 2 lado a lado, 3 en 2+1, 4 en 2x2
+    /* Rejilla. El orden sigue al de calculateLayoutTree() de Zen, que llena
+       columna por columna y no fila por fila: con 4 paneles, el segundo queda
+       DEBAJO del primero, no a su derecha. Solo se usa como respaldo, mientras
+       una división restaurada aún no se ha llegado a mostrar; en cuanto se
+       abre una vez, la posición se calcula de su geometría real. */
     mosaic: {
       2: [[30, 50, 36], [70, 50, 36]],
-      3: [[30, 32, 32], [70, 32, 32], [50, 70, 32]],
-      4: [[30, 30, 32], [70, 30, 32], [30, 70, 32], [70, 70, 32]],
+      3: [[30, 30, 32], [30, 70, 32], [70, 50, 32]],
+      4: [[30, 30, 32], [30, 70, 32], [70, 30, 32], [70, 70, 32]],
     },
 
     // pila en diagonal: cada icono tapa un poco al anterior
@@ -266,24 +270,56 @@
     return window.gZenViewSplitter?.MAX_TABS || 4;
   }
 
-  // el favicon de un Essential, ya listo para usarse como background-image
-  function iconoDe(tab) {
-    // 1. Zen guarda el favicon del Essential en el estilo inline de la pestaña,
-    //    y ya viene envuelto en url(...): es la fuente preferente
-    const propia = tab.style.getPropertyValue("--zen-essential-tab-icon").trim();
-    if (propia) {
-      return propia;
+  // último favicon bueno de cada pestaña, para no repintar el azulejo en vacío
+  const iconosRecordados = new WeakMap();
+
+  // true solo si el valor es un url(...) que de verdad apunta a algo
+  function urlConContenido(valor) {
+    if (!valor) {
+      return false;
     }
 
-    // 2. Respaldo: el atributo image de la pestaña, que es una URL pelada
+    const dentro = valor
+      .replace(/^url\(\s*/iu, "")
+      .replace(/\s*\)$/u, "")
+      .replace(/^["']|["']$/gu, "")
+      .trim();
+
+    return dentro.length > 0;
+  }
+
+  // el atributo image de la pestaña, envuelto en url() y con las comillas y
+  // barras invertidas escapadas, o la declaración se rompería
+  function urlDeImagen(tab) {
     const imagen = tab.image || tab.getAttribute("image") || "";
     if (!imagen) {
       return "";
     }
 
-    // comillas y barras invertidas escapadas, o la url() se rompería
     const seguro = imagen.replace(/\\/gu, "\\\\").replace(/"/gu, '\\"');
     return 'url("' + seguro + '")';
+  }
+
+  // el favicon de un Essential, ya listo para usarse como background-image
+  function iconoDe(tab) {
+    // 1. Zen guarda el favicon del Essential en el estilo inline de la pestaña.
+    //    Cuidado: setEssentialTabIcon() hace getAttribute("image") ?? "", y
+    //    mientras la pestaña carga ese atributo no está, así que escribe
+    //    literalmente "url()". Justo al abrir una división pasa siempre
+    const inline = tab.style.getPropertyValue("--zen-essential-tab-icon").trim();
+
+    // 2. Ese vacío no vale: se prueba el atributo image por si ya volvió
+    const candidato = urlConContenido(inline) ? inline : urlDeImagen(tab);
+
+    // 3. Solo se recuerda lo que sirve. Si ahora mismo no hay nada, se responde
+    //    con el último favicon bueno: es preferible uno de hace un segundo a
+    //    dejar el azulejo en blanco hasta el siguiente repintado
+    if (candidato) {
+      iconosRecordados.set(tab, candidato);
+      return candidato;
+    }
+
+    return iconosRecordados.get(tab) || "";
   }
 
   // el miembro del grupo que aparece primero en la barra: ahí se dibuja el
@@ -568,28 +604,145 @@
     }
   }
 
+  /* --- De dónde sale la posición de cada icono ---------------------------
+
+     grupo.tabs es el orden en que se creó la división, no el que ves: si
+     arrastras un panel de izquierda a derecha, ese array no se entera. El
+     orden y la geometría de verdad están en grupo.layoutTree, y Zen deja
+     escrito en cada hoja un positionToRoot con los cuatro márgenes del panel
+     en % del área de contenido — lo usa para colocar los browsers.
+
+     Aprovechando eso, el mosaico deja de ser una tabla fija y pasa a ser una
+     miniatura fiel: cada favicon va donde está su panel. Reordenar o
+     redimensionar paneles se refleja solo. */
+
+  // las hojas del árbol de la división, en el orden en que cuelgan
+  function hojasDe(grupo) {
+    const hojas = [];
+
+    const recorrer = (nodo) => {
+      if (!nodo) {
+        return;
+      }
+
+      // una hoja lleva pestaña y no tiene hijos
+      if (nodo.tab) {
+        hojas.push(nodo);
+        return;
+      }
+
+      for (const hijo of nodo.children || []) {
+        recorrer(hijo);
+      }
+    };
+
+    recorrer(grupo.layoutTree);
+    return hojas;
+  }
+
+  // el rectángulo del panel, en % del área de contenido. Solo existe después
+  // de que la división se haya mostrado al menos una vez
+  function rectanguloDe(hoja) {
+    const margenes = hoja.positionToRoot;
+    if (!margenes) {
+      return null;
+    }
+
+    const ancho = 100 - margenes.left - margenes.right;
+    const alto = 100 - margenes.top - margenes.bottom;
+
+    if (!(ancho > 0) || !(alto > 0)) {
+      return null;
+    }
+
+    return { x: margenes.left, y: margenes.top, ancho, alto };
+  }
+
+  // convierte el rectángulo de un panel en la posición del icono dentro del
+  // azulejo. Los dos números de abajo son los únicos mandos de este cálculo
+  function miniaturaDe(rect) {
+    // margen que se deja libre a cada lado del azulejo
+    const MARGEN = 10;
+
+    // cuánto del panel llega a ocupar el icono, sin tocar al vecino
+    const LLENADO = 0.85;
+
+    const escala = (100 - MARGEN * 2) / 100;
+    const redondear = (valor) => Math.round(valor * 10) / 10;
+
+    return {
+      x: redondear(MARGEN + (rect.x + rect.ancho / 2) * escala),
+      y: redondear(MARGEN + (rect.y + rect.alto / 2) * escala),
+      z: redondear(Math.min(46, Math.min(rect.ancho, rect.alto) * escala * LLENADO)),
+    };
+  }
+
+  // las N ranuras a pintar: qué favicon va en cada una y dónde
+  function ranurasDe(grupo, modo) {
+    // 1. Hojas del árbol, con su rectángulo cuando Zen ya lo ha calculado
+    const hojas = hojasDe(grupo);
+    const paneles =
+      hojas.length === grupo.tabs.length
+        ? hojas.map((hoja) => ({ tab: hoja.tab, rect: rectanguloDe(hoja) }))
+        : [];
+
+    const hayGeometria = paneles.length >= 2 && paneles.every((p) => p.rect);
+
+    // 2. Mosaico con geometría: miniatura exacta de lo que hay en pantalla
+    if (modo === "mosaic" && hayGeometria) {
+      return paneles.map((panel) => ({
+        icono: iconoDe(panel.tab),
+        ...miniaturaDe(panel.rect),
+      }));
+    }
+
+    // 3. Los demás modos usan la tabla fija, pero ordenando los miembros como
+    //    se leen en pantalla: primero por fila y luego por columna
+    const ordenados = hayGeometria
+      ? paneles
+          .slice()
+          .sort((a, b) => a.rect.y - b.rect.y || a.rect.x - b.rect.x)
+          .map((panel) => panel.tab)
+      : grupo.tabs;
+
+    // 4. Sin geometría —división restaurada que todavía no se ha abierto— se
+    //    cae al orden de creación. En cuanto se muestre una vez, se corrige
+    const plano = DISENOS[modo]?.[ordenados.length];
+    if (!plano) {
+      return [];
+    }
+
+    return ordenados.map((tab, i) => ({
+      icono: iconoDe(tab),
+      x: plano[i][0],
+      y: plano[i][1],
+      z: plano[i][2],
+    }));
+  }
+
   // escribe en el ancla las variables que chrome.css necesita para pintar los
   // N favicons dentro de una sola casilla
-  function componerAzulejo(ancla, miembros, modo) {
-    const plano = DISENOS[modo]?.[miembros.length];
-    if (!plano) {
+  function componerAzulejo(ancla, grupo, modo) {
+    const ranuras = ranurasDe(grupo, modo);
+    if (!ranuras.length) {
       return;
     }
 
     ancla.setAttribute(ATTR_ANCLA, "true");
 
-    for (let ranura = 1; ranura <= miembros.length; ranura += 1) {
-      const [x, y, lado] = plano[ranura - 1];
+    for (let indice = 0; indice < ranuras.length; indice += 1) {
+      const ranura = indice + 1;
+      const dato = ranuras[indice];
 
-      // el favicon del miembro que ocupa esta ranura
-      ancla.style.setProperty("--zes-icon-" + ranura, iconoDe(miembros[ranura - 1]));
+      // el favicon del panel que ocupa esta ranura
+      ancla.style.setProperty("--zes-icon-" + ranura, dato.icono);
 
       // centro del icono dentro del azulejo, en % del propio azulejo
-      ancla.style.setProperty("--zes-x" + ranura, x + "%");
-      ancla.style.setProperty("--zes-y" + ranura, y + "%");
+      ancla.style.setProperty("--zes-x" + ranura, dato.x + "%");
+      ancla.style.setProperty("--zes-y" + ranura, dato.y + "%");
 
       // lado del icono, también en % del azulejo: así escala con la barra
-      ancla.style.setProperty("--zes-z" + ranura, lado + "%");
+      ancla.style.setProperty("--zes-z" + ranura, dato.z + "%");
     }
   }
 
@@ -640,10 +793,10 @@
         }
       }
 
-      // 4. Los favicons se pintan en el orden de los paneles, no en el de la
-      //    barra: así el mosaico se parece a lo que ves en pantalla
+      // 4. Los favicons se colocan según el árbol de la división, no según el
+      //    orden de la barra: así el azulejo se parece a lo que ves en pantalla
       if (modo !== "separate") {
-        componerAzulejo(ancla, miembros, modo);
+        componerAzulejo(ancla, grupo, modo);
       }
     }
   }
@@ -1025,24 +1178,48 @@
 
   function alCambiarLaVista() {
     marcarEssentials();
+
+    // segunda pasada poco después: al activar una división, los paneles que
+    // estaban descargados empiezan a cargar y pierden el favicon un instante.
+    // Para entonces ya habrá vuelto
+    repintarPronto(500);
+
     guardarGruposDiferido();
   }
 
-  // los favicons llegan tarde y cambian al navegar. Si el que cambió está
-  // dentro de un grupo, hay que repintar el azulejo combinado del ancla
   let temporizadorRepintado = null;
 
-  function alCambiarAtributos(evento) {
-    const tab = evento.target;
+  // repintado perezoso: los disparadores llegan en ráfagas y repintar de más
+  // no cuesta nada, pero hacerlo en mitad de una ráfaga sí puede pillar el
+  // estado a medio hacer
+  function repintarPronto(retraso = 200) {
+    if (temporizadorRepintado) {
+      window.clearTimeout(temporizadorRepintado);
+    }
+    temporizadorRepintado = window.setTimeout(marcarEssentials, retraso);
+  }
+
+  // los favicons llegan tarde y cambian al navegar. Si el que cambió está en
+  // un grupo, el azulejo combinado tiene que volver a pintarse
+  function alCambiarElIcono(evento) {
+    const tab = evento.target?.closest?.(".tabbrowser-tab") || evento.target;
 
     if (!esEssential(tab) || !grupoDe(tab)) {
       return;
     }
 
-    if (temporizadorRepintado) {
-      window.clearTimeout(temporizadorRepintado);
+    repintarPronto();
+  }
+
+  // reordenar o redimensionar paneles no emite ningún evento propio, así que
+  // el final de la interacción se detecta por el ratón sobre el área de
+  // contenido. Repintar de más aquí es inofensivo
+  function alSoltarEnElContenido() {
+    if (!window.gZenViewSplitter?.splitViewActive) {
+      return;
     }
-    temporizadorRepintado = window.setTimeout(marcarEssentials, 300);
+
+    repintarPronto(250);
   }
 
   // cambiar el modo de azulejo en Sine debe verse al instante
@@ -1054,7 +1231,16 @@
     window.addEventListener("ZenViewSplitter:SplitViewActivated", alCambiarLaVista);
     window.addEventListener("ZenViewSplitter:SplitViewDeactivated", alCambiarLaVista);
     window.addEventListener("TabClose", alCambiarLaVista);
-    window.addEventListener("TabAttrModified", alCambiarAtributos);
+
+    // el icono cambia por dos vías: el evento propio de Zen y el atributo image
+    window.addEventListener("ZenTabIconChanged", alCambiarElIcono);
+    window.addEventListener("TabAttrModified", alCambiarElIcono);
+
+    // fin de un arrastre o de un tirón del separador entre paneles. Se escucha
+    // en la ventana y no en el área de contenido porque el ratón se captura
+    // durante el arrastre y el mouseup puede caer en cualquier sitio
+    window.addEventListener("mouseup", alSoltarEnElContenido);
+    window.addEventListener("dragend", alSoltarEnElContenido);
 
     try {
       Services.prefs.addObserver(PREF.azulejo, observadorDePrefs);
@@ -1067,7 +1253,11 @@
     window.removeEventListener("ZenViewSplitter:SplitViewActivated", alCambiarLaVista);
     window.removeEventListener("ZenViewSplitter:SplitViewDeactivated", alCambiarLaVista);
     window.removeEventListener("TabClose", alCambiarLaVista);
-    window.removeEventListener("TabAttrModified", alCambiarAtributos);
+    window.removeEventListener("ZenTabIconChanged", alCambiarElIcono);
+    window.removeEventListener("TabAttrModified", alCambiarElIcono);
+
+    window.removeEventListener("mouseup", alSoltarEnElContenido);
+    window.removeEventListener("dragend", alSoltarEnElContenido);
 
     try {
       Services.prefs.removeObserver(PREF.azulejo, observadorDePrefs);

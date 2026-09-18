@@ -8,7 +8,7 @@
 
 **Agrupa 2, 3 o 4 Essentials para que se abran juntos en la vista dividida de Zen.**
 
-![version](https://img.shields.io/badge/version-1.1.0-1E3A8A)
+![version](https://img.shields.io/badge/version-1.1.2-1E3A8A)
 ![Zen Browser](https://img.shields.io/badge/Zen-Browser-4C1D95)
 ![Sine](https://img.shields.io/badge/Sine-mod-38BDF8)
 ![JS + CSS](https://img.shields.io/badge/JS%20%2B%20CSS-mod-7C3AED)
@@ -90,7 +90,7 @@ A group of 4 used to eat 4 slots in the sidebar. By default it now takes **one**
 
 ![The four tile modes](assets/tiles-en.svg)
 
-The layout is expressed entirely in percentages of the tile, so it holds at any sidebar width — and on the square tiles of [zen-essentials-compact](https://github.com/piero-valles-maravi/zen-essentials-compact).
+**The mosaic is a faithful miniature.** It is not a fixed grid of icons: each favicon sits where its pane actually is. Split into columns and the icons sit side by side; stack the panes and the icons stack too; drag a pane from left to right and the icons swap with it; resize a pane and its icon grows or shrinks with it. Everything is measured in percentages, so the tile holds at any sidebar width — and on the square tiles of [zen-essentials-compact](https://github.com/piero-valles-maravi/zen-essentials-compact).
 
 > **What you give up with A, B and C.** Hidden members can't be clicked on their own, so the tile always opens the whole split, and Zen's per-app unread and notification marks only show for the tile's owner. If that matters more than the space, pick **D · Separate tiles** — it keeps every Essential clickable and only adds the little bar.
 
@@ -123,6 +123,11 @@ Everything else — layout, resizing, closing a pane, the unsplit button on the 
 **Persistence.** Zen's session store saves splits by tab-group id, and ours have no tab group, so they would be lost. The mod keeps its own list in the pref `zen-essentials-split.saved-groups`, identifying each Essential by *container + site origin*, and rebuilds the groups a moment after `AfterWorkspacesSessionRestore` — without stealing the screen.
 
 **The combined tile.** Zen already stores each Essential's favicon as `--zen-essential-tab-icon` in the tab's inline style. The script reads them, writes them onto the tile's owner as `--zes-icon-1` … `--zes-icon-4` together with the position and size of each slot, and `chrome.css` paints them with four pseudo-elements (`.tab-background::before/::after` and `.tab-content::before/::after`). The other members get `display: none` — they are neither closed nor unloaded, they just stop taking up space. Unloading the mod removes all of it, so no Essential is ever left hidden.
+
+Two details that are easy to get wrong, and that the mod handles explicitly:
+
+- **Where each icon goes.** `group.tabs` is the *creation* order and never changes when you rearrange panes. The real order and geometry live in `group.layoutTree`, where Zen writes a `positionToRoot` on every leaf — the four margins of that pane as percentages, which it uses to place the browsers. The mosaic reads those, which is why it tracks reordering and resizing for free.
+- **Favicons that vanish for an instant.** Zen's `setEssentialTabIcon()` does `getAttribute("image") ?? ""`, so while a tab is loading it literally writes `url()`. Activating a split loads the pending panes, so that empty value lands exactly when the tile is being repainted. The mod treats an empty `url()` as no icon, falls back to the tab's `image` attribute, and keeps the last good favicon per tab so a blank never reaches the tile.
 
 ### 📝 Notes and limitations
 
@@ -220,7 +225,7 @@ Un grupo de 4 ocupaba 4 casillas de la barra. Por defecto ahora ocupa **una**: e
 
 ![Los cuatro modos de azulejo](assets/tiles.svg)
 
-Todo el diseño está expresado en porcentajes del azulejo, así que aguanta cualquier ancho de barra lateral — y los azulejos cuadrados de [zen-essentials-compact](https://github.com/piero-valles-maravi/zen-essentials-compact).
+**El mosaico es una miniatura fiel.** No es una rejilla fija de iconos: cada favicon va donde está su panel de verdad. Si divides en columnas, los iconos van lado a lado; si apilas los paneles, los iconos se apilan; si arrastras un panel de izquierda a derecha, los iconos se intercambian con él; si estiras un panel, su icono crece. Todo está medido en porcentajes, así que el azulejo aguanta cualquier ancho de barra lateral — y los azulejos cuadrados de [zen-essentials-compact](https://github.com/piero-valles-maravi/zen-essentials-compact).
 
 > **Qué se pierde con A, B y C.** Los miembros ocultos ya no se pueden abrir por separado, así que el azulejo siempre abre la división entera, y los avisos de no leídos y notificaciones de Zen solo se ven en el Essential dueño del azulejo. Si eso te pesa más que el espacio, elige **D · Azulejos separados**: conserva cada Essential clicable y solo añade la barrita.
 
@@ -253,6 +258,11 @@ Todo lo demás — layout, redimensionar, cerrar un panel, el botón de deshacer
 **Persistencia.** El session store de Zen guarda las divisiones por el id del tab-group, y las nuestras no tienen tab-group: se perderían. El mod lleva su propia lista en la preferencia `zen-essentials-split.saved-groups`, identificando cada Essential por *contenedor + origen del sitio*, y rehace los grupos poco después de `AfterWorkspacesSessionRestore` — sin robar la pantalla.
 
 **El azulejo combinado.** Zen ya guarda el favicon de cada Essential como `--zen-essential-tab-icon` en el estilo inline de la pestaña. El script los lee, los escribe en el dueño del azulejo como `--zes-icon-1` … `--zes-icon-4` junto con la posición y el tamaño de cada ranura, y `chrome.css` los pinta con cuatro pseudoelementos (`.tab-background::before/::after` y `.tab-content::before/::after`). A los demás miembros les pone `display: none`: no se cierran ni se descargan, solo dejan de ocupar sitio. Al descargar el mod se retira todo, así que ningún Essential queda oculto.
+
+Dos detalles fáciles de equivocar, y que el mod resuelve a propósito:
+
+- **Dónde va cada icono.** `group.tabs` es el orden de *creación* y no cambia al reordenar paneles. El orden y la geometría reales están en `group.layoutTree`, donde Zen escribe en cada hoja un `positionToRoot` con los cuatro márgenes de ese panel en porcentajes — los mismos que usa para colocar los browsers. El mosaico los lee, y por eso sigue solo a los cambios de orden y de tamaño.
+- **Favicons que desaparecen un instante.** `setEssentialTabIcon()` de Zen hace `getAttribute("image") ?? ""`, así que mientras una pestaña carga escribe literalmente `url()`. Activar una división carga los paneles pendientes, de modo que ese valor vacío cae justo cuando se repinta el azulejo. El mod trata un `url()` vacío como "sin icono", prueba el atributo `image` de la pestaña, y recuerda el último favicon bueno de cada una para que nunca llegue un hueco al azulejo.
 
 ### 📝 Notas y limitaciones
 
