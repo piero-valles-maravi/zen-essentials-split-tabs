@@ -1,9 +1,25 @@
 /* ============================================================
  * Zen Essentials Split Tabs — hoja de estilo
  *
- * El trabajo pesado lo hace zen-essentials-split-tabs.uc.js. Aquí
- * solo se dibuja: el azulejo combinado de un grupo y la marca que
- * indica qué Essentials van juntos.
+ * El trabajo pesado lo hace zen-essentials-split-tabs.uc.js, que
+ * además inyecta en cada Essential agrupado una capa propia:
+ *
+ *   <div class="zes-overlay">      dentro de .tab-stack, la última
+ *     <span class="zes-icon">      un favicon del grupo (1 a 4)
+ *     <span class="zes-bar">       la barrita del modo separado
+ *
+ * La posición y el tamaño de cada icono los escribe el script en
+ * línea, en % del azulejo, porque salen de la geometría real de la
+ * división. Aquí solo se define el aspecto.
+ *
+ * POR QUÉ UNA CAPA PROPIA Y NO PSEUDOELEMENTOS
+ * Con zen.theme.essentials-favicon-bg —activada de serie— Zen usa
+ * los DOS pseudoelementos de .tab-background en cuanto el Essential
+ * está [visuallyselected]: ::before es la placa opaca del fondo y
+ * ::after el favicon desenfocado. Su `inset: 0` pisa la posición y
+ * su `background` pisa la imagen, así que los iconos desaparecían
+ * justo al hacer clic en el azulejo. Con una capa propia no hay
+ * nada que compartir.
  *
  * Atributos que pone el script en cada Essential de un grupo:
  *   zes-split="true"         pertenece a una división
@@ -12,16 +28,6 @@
  *   zes-tile="separate|mosaic|stack|badges"  modo elegido
  *   zes-tile-anchor="true"   es el azulejo donde se dibuja el grupo
  *   zes-tile-hidden="true"   se oculta: su icono ya va dentro del ancla
- *
- * Y, solo en el ancla, las variables de cada ranura (1 a 4):
- *   --zes-icon-N  favicon ya envuelto en url(...)
- *   --zes-xN      centro horizontal, en % del azulejo
- *   --zes-yN      centro vertical, en % del azulejo
- *   --zes-zN      lado del icono, en % del azulejo
- *
- * Que todo vaya en % es lo que hace que el azulejo aguante cualquier
- * ancho de barra lateral y también los azulejos cuadrados de
- * zen-essentials-compact, sin medidas fijas que cuadrar.
  * ============================================================ */
 
 :root {
@@ -40,27 +46,36 @@
 }
 
 
+/* === La capa de dibujo ================================================== */
+
+/* El stack de la pestaña pasa a ser el marco de referencia de la capa. */
+.zen-essentials-container .tabbrowser-tab[zes-split="true"] .tab-stack {
+  position: relative;
+}
+
+.zen-essentials-container .tabbrowser-tab[zes-split="true"] .zes-overlay {
+  position: absolute;
+  inset: 0;
+
+  /* Por delante de la placa de fondo que Zen pinta al seleccionar. */
+  z-index: 3;
+
+  /* Decorativa: los clics son de la pestaña. */
+  pointer-events: none;
+}
+
+
 /* === Modos combinados: un solo azulejo para todo el grupo ===============
    Los miembros que no son el ancla salen de la barra. No se cierran ni se
-   desactivan: solo dejan de ocupar sitio, y su favicon reaparece dentro del
+   descargan: solo dejan de ocupar sitio, y su favicon reaparece dentro del
    azulejo del ancla. */
 
 .zen-essentials-container .tabbrowser-tab[zes-tile-hidden="true"] {
   display: none !important;
 }
 
-/* El ancla necesita un sistema de coordenadas para las cuatro ranuras. Se
-   ancla en .tab-stack y no en .tab-background porque las ranuras 3 y 4 son
-   pseudoelementos de .tab-content, que es hermano de .tab-background: solo
-   un ancestro común les sirve a las cuatro. */
-.zen-essentials-container
-  .tabbrowser-tab[zes-tile-anchor="true"]
-  > .tab-stack {
-  position: relative;
-}
-
-/* El favicon propio del ancla estorba: el grupo se dibuja entero con las
-   ranuras, incluida la del propio ancla. */
+/* El favicon propio del ancla estorba: el grupo se dibuja entero en la capa,
+   incluido el icono del propio ancla. */
 .zen-essentials-container
   .tabbrowser-tab[zes-tile-anchor="true"]
   :is(
@@ -73,106 +88,33 @@
   display: none !important;
 }
 
-/* --- Las cuatro ranuras ---
-   Cuatro reglas casi idénticas, una por pseudoelemento disponible. Cambian
-   solo en qué juego de variables leen; el resto del aspecto es común y se
-   repite porque no hay forma de heredarlo entre pseudoelementos distintos. */
-
-.zen-essentials-container
-  .tabbrowser-tab[zes-tile-anchor="true"]
-  .tab-background::before {
-  content: "";
+/* Cada favicon del grupo. Las medidas vienen en línea desde el script. */
+.zen-essentials-container .tabbrowser-tab[zes-tile-anchor="true"] .zes-icon {
   position: absolute;
-  left: var(--zes-x1);
-  top: var(--zes-y1);
-  width: var(--zes-z1);
-  height: var(--zes-z1);
+
+  /* Las coordenadas apuntan al centro del icono, no a su esquina. */
   transform: translate(-50%, -50%);
-  background-image: var(--zes-icon-1);
+
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
   border-radius: 22%;
-  pointer-events: none;
 }
 
-.zen-essentials-container
-  .tabbrowser-tab[zes-tile-anchor="true"]
-  .tab-background::after {
-  content: "";
-  position: absolute;
-  left: var(--zes-x2);
-  top: var(--zes-y2);
-  width: var(--zes-z2);
-  height: var(--zes-z2);
-  transform: translate(-50%, -50%);
-  background-image: var(--zes-icon-2);
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-  border-radius: 22%;
-  pointer-events: none;
-}
-
-/* Las ranuras 3 y 4 solo existen con 3 y 4 paneles: sin el filtro por
-   zes-split-size aparecerían como cuadros vacíos en los grupos de dos. */
-.zen-essentials-container
-  .tabbrowser-tab[zes-tile-anchor="true"]:is(
-    [zes-split-size="3"],
-    [zes-split-size="4"]
-  )
-  .tab-content::before {
-  content: "";
-  position: absolute;
-  left: var(--zes-x3);
-  top: var(--zes-y3);
-  width: var(--zes-z3);
-  height: var(--zes-z3);
-  transform: translate(-50%, -50%);
-  background-image: var(--zes-icon-3);
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-  border-radius: 22%;
-  pointer-events: none;
-}
-
-.zen-essentials-container
-  .tabbrowser-tab[zes-tile-anchor="true"][zes-split-size="4"]
-  .tab-content::after {
-  content: "";
-  position: absolute;
-  left: var(--zes-x4);
-  top: var(--zes-y4);
-  width: var(--zes-z4);
-  height: var(--zes-z4);
-  transform: translate(-50%, -50%);
-  background-image: var(--zes-icon-4);
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-  border-radius: 22%;
-  pointer-events: none;
-}
-
-/* --- Solapados: cada icono se recorta contra el de abajo ---
-   El halo del color del fondo es lo que crea la sensación de pila; sin él
-   los iconos se funden entre sí. */
+/* Solapados: el halo del color del fondo es lo que crea la sensación de pila;
+   sin él los iconos se funden entre sí. */
 .zen-essentials-container
   .tabbrowser-tab[zes-tile="stack"][zes-tile-anchor="true"]
-  :is(.tab-background::before, .tab-background::after),
-.zen-essentials-container
-  .tabbrowser-tab[zes-tile="stack"][zes-tile-anchor="true"]
-  :is(.tab-content::before, .tab-content::after) {
+  .zes-icon {
   border-radius: 50%;
   box-shadow: 0 0 0 2px var(--zes-ring-color);
 }
 
-/* --- Insignias: las pequeñas también se recortan, para que se lean
-       aunque caigan encima del icono grande --- */
+/* Insignias: las pequeñas también se recortan, para que se lean aunque caigan
+   encima del icono grande. La primera es el icono principal y va limpia. */
 .zen-essentials-container
   .tabbrowser-tab[zes-tile="badges"][zes-tile-anchor="true"]
-  :is(.tab-background::after, .tab-content::before, .tab-content::after) {
+  .zes-icon:not(:first-child) {
   border-radius: 50%;
   box-shadow: 0 0 0 1.5px var(--zes-ring-color);
 }
@@ -187,15 +129,8 @@
      Es el único modo que la necesita; en los combinados el propio mosaico
      ya dice que ahí hay varios sitios. */
   .zen-essentials-container
-    .tabbrowser-tab[zen-essential][zes-tile="separate"][zes-split="true"]
-    .tab-background {
-    position: relative;
-  }
-
-  .zen-essentials-container
-    .tabbrowser-tab[zen-essential][zes-tile="separate"][zes-split="true"]
-    .tab-background::after {
-    content: "";
+    .tabbrowser-tab[zes-tile="separate"][zes-split="true"]
+    .zes-bar {
     position: absolute;
     bottom: var(--zes-dot-inset);
     left: 50%;
@@ -209,34 +144,34 @@
     background-color: var(--zes-dot-color);
     opacity: 0.55;
     transition: opacity 120ms ease;
-    pointer-events: none;
   }
 
   .zen-essentials-container
-    .tabbrowser-tab[zen-essential][zes-tile="separate"][zes-split-size="3"]
-    .tab-background::after {
+    .tabbrowser-tab[zes-tile="separate"][zes-split-size="3"]
+    .zes-bar {
     width: calc(var(--zes-dot-size) * 2.2);
   }
 
   .zen-essentials-container
-    .tabbrowser-tab[zen-essential][zes-tile="separate"][zes-split-size="4"]
-    .tab-background::after {
+    .tabbrowser-tab[zes-tile="separate"][zes-split-size="4"]
+    .zes-bar {
     width: calc(var(--zes-dot-size) * 3);
   }
 
   .zen-essentials-container
-    .tabbrowser-tab[zen-essential][zes-tile="separate"][zes-split-active="true"]
-    .tab-background::after {
+    .tabbrowser-tab[zes-tile="separate"][zes-split-active="true"]
+    .zes-bar {
     opacity: 1;
   }
 
   /* --- Modos combinados: un borde en el azulejo cuando esa división es la
-         que está en pantalla. No se puede usar la barrita porque sus dos
-         pseudoelementos ya están ocupados por las ranuras 1 y 2. --- */
+         que está en pantalla. Va en la capa y no en .tab-background, que al
+         seleccionar la pestaña es terreno de Zen. --- */
   .zen-essentials-container
     .tabbrowser-tab[zes-tile-anchor="true"][zes-split-active="true"]
-    .tab-background {
+    .zes-overlay {
     outline: 2px solid var(--zes-dot-color);
     outline-offset: -2px;
+    border-radius: var(--border-radius-medium, 10px);
   }
 }

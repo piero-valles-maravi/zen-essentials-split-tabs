@@ -8,7 +8,7 @@
 
 **Agrupa 2, 3 o 4 Essentials para que se abran juntos en la vista dividida de Zen.**
 
-![version](https://img.shields.io/badge/version-1.1.2-1E3A8A)
+![version](https://img.shields.io/badge/version-1.1.3-1E3A8A)
 ![Zen Browser](https://img.shields.io/badge/Zen-Browser-4C1D95)
 ![Sine](https://img.shields.io/badge/Sine-mod-38BDF8)
 ![JS + CSS](https://img.shields.io/badge/JS%20%2B%20CSS-mod-7C3AED)

@@ -587,6 +587,44 @@
      El JS solo pone atributos; el punto lo dibuja chrome.css, que además
      lo puede apagar desde las preferencias sin tocar este archivo. */
 
+  /* --- Dónde se dibuja ---------------------------------------------------
+
+     Todo lo que pinta el mod va en un elemento propio inyectado en .tab-stack,
+     no en pseudoelementos de la pestaña.
+
+     La razón es concreta: con zen.theme.essentials-favicon-bg —activada de
+     serie— Zen se queda con LOS DOS pseudoelementos de .tab-background en
+     cuanto el Essential está [visuallyselected]. ::before es la placa opaca
+     del fondo seleccionado y ::after el favicon desenfocado. Su `inset: 0`
+     pisa la posición de las ranuras y su `background` pisa la imagen, así que
+     los iconos desaparecían justo al hacer clic en el azulejo. Con un
+     elemento propio no hay nada que compartir con Zen. */
+
+  const CLASE_CAPA = "zes-overlay";
+
+  // la capa de dibujo de una pestaña, creándola si aún no existe
+  function capaDe(tab) {
+    const pila = tab.querySelector(".tab-stack");
+    if (!pila) {
+      return null;
+    }
+
+    let capa = pila.querySelector("." + CLASE_CAPA);
+
+    if (!capa) {
+      capa = document.createElement("div");
+      capa.className = CLASE_CAPA;
+    }
+
+    // siempre la última de la pila: en un stack de XUL pinta encima quien va
+    // después, y así queda por delante del fondo de la pestaña
+    if (capa !== pila.lastChild) {
+      pila.appendChild(capa);
+    }
+
+    return capa;
+  }
+
   // deja una pestaña como si el mod nunca la hubiera tocado
   function limpiarMarcas(tab) {
     tab.removeAttribute(ATTR_MARCA);
@@ -596,12 +634,7 @@
     tab.removeAttribute(ATTR_ANCLA);
     tab.removeAttribute(ATTR_OCULTO);
 
-    for (let ranura = 1; ranura <= 4; ranura += 1) {
-      tab.style.removeProperty("--zes-icon-" + ranura);
-      tab.style.removeProperty("--zes-x" + ranura);
-      tab.style.removeProperty("--zes-y" + ranura);
-      tab.style.removeProperty("--zes-z" + ranura);
-    }
+    tab.querySelector("." + CLASE_CAPA)?.remove();
   }
 
   /* --- De dónde sale la posición de cada icono ---------------------------
@@ -720,30 +753,54 @@
     }));
   }
 
-  // escribe en el ancla las variables que chrome.css necesita para pintar los
-  // N favicons dentro de una sola casilla
+  // dibuja los N favicons dentro del azulejo del ancla
   function componerAzulejo(ancla, grupo, modo) {
     const ranuras = ranurasDe(grupo, modo);
     if (!ranuras.length) {
       return;
     }
 
+    const capa = capaDe(ancla);
+    if (!capa) {
+      return;
+    }
+
     ancla.setAttribute(ATTR_ANCLA, "true");
 
-    for (let indice = 0; indice < ranuras.length; indice += 1) {
-      const ranura = indice + 1;
-      const dato = ranuras[indice];
+    // se redibuja entera en cada pasada: son cuatro nodos como mucho
+    capa.textContent = "";
 
-      // el favicon del panel que ocupa esta ranura
-      ancla.style.setProperty("--zes-icon-" + ranura, dato.icono);
+    for (const dato of ranuras) {
+      const icono = document.createElement("span");
+      icono.className = "zes-icon";
 
-      // centro del icono dentro del azulejo, en % del propio azulejo
-      ancla.style.setProperty("--zes-x" + ranura, dato.x + "%");
-      ancla.style.setProperty("--zes-y" + ranura, dato.y + "%");
+      // centro y lado del icono, en % del azulejo: así escala con la barra
+      icono.style.left = dato.x + "%";
+      icono.style.top = dato.y + "%";
+      icono.style.width = dato.z + "%";
+      icono.style.height = dato.z + "%";
 
-      // lado del icono, también en % del azulejo: así escala con la barra
-      ancla.style.setProperty("--zes-z" + ranura, dato.z + "%");
+      // sin favicon todavía, el hueco se queda transparente en vez de en negro
+      if (dato.icono) {
+        icono.style.backgroundImage = dato.icono;
+      }
+
+      capa.appendChild(icono);
     }
+  }
+
+  // dibuja la barrita del modo "azulejos separados"
+  function marcarConBarra(tab) {
+    const capa = capaDe(tab);
+    if (!capa) {
+      return;
+    }
+
+    capa.textContent = "";
+
+    const barra = document.createElement("span");
+    barra.className = "zes-bar";
+    capa.appendChild(barra);
   }
 
   function marcarEssentials() {
@@ -790,6 +847,11 @@
         //     de la barra: sus iconos ya se dibujan dentro del azulejo del ancla
         if (modo !== "separate" && tab !== ancla) {
           tab.setAttribute(ATTR_OCULTO, "true");
+        }
+
+        // 3c. en modo separado cada miembro lleva su propia barrita
+        if (modo === "separate") {
+          marcarConBarra(tab);
         }
       }
 
