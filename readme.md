@@ -122,12 +122,13 @@ Everything else — layout, resizing, closing a pane, the unsplit button on the 
 
 **Persistence.** Zen's session store saves splits by tab-group id, and ours have no tab group, so they would be lost. The mod keeps its own list in the pref `zen-essentials-split.saved-groups`, identifying each Essential by *container + site origin*, and rebuilds the groups a moment after `AfterWorkspacesSessionRestore` — without stealing the screen.
 
-**The combined tile.** Zen already stores each Essential's favicon as `--zen-essential-tab-icon` in the tab's inline style. The script reads them, writes them onto the tile's owner as `--zes-icon-1` … `--zes-icon-4` together with the position and size of each slot, and `chrome.css` paints them with four pseudo-elements (`.tab-background::before/::after` and `.tab-content::before/::after`). The other members get `display: none` — they are neither closed nor unloaded, they just stop taking up space. Unloading the mod removes all of it, so no Essential is ever left hidden.
+**The combined tile.** Zen already stores each Essential's favicon as `--zen-essential-tab-icon` in the tab's inline style. The script reads them and paints one `<span>` per favicon inside a `div.zes-overlay` it injects into the tile's `.tab-stack`; `chrome.css` only defines how those spans look. The other members get `display: none` — they are neither closed nor unloaded, they just stop taking up space. Unloading the mod removes all of it, so no Essential is ever left hidden.
 
-Two details that are easy to get wrong, and that the mod handles explicitly:
+Three details that are easy to get wrong, and that the mod handles explicitly:
 
+- **Why an injected layer instead of pseudo-elements.** With `zen.theme.essentials-favicon-bg` — on by default — Zen claims *both* pseudo-elements of `.tab-background` as soon as the Essential is `[visuallyselected]`: `::before` is the opaque selected-tab plate and `::after` the blurred favicon backdrop. Its `inset: 0` overrides the slot's position and its `background` overrides the image, so icons drawn there vanish the moment you click the tile. An element of our own shares nothing with Zen.
 - **Where each icon goes.** `group.tabs` is the *creation* order and never changes when you rearrange panes. The real order and geometry live in `group.layoutTree`, where Zen writes a `positionToRoot` on every leaf — the four margins of that pane as percentages, which it uses to place the browsers. The mosaic reads those, which is why it tracks reordering and resizing for free.
-- **Favicons that vanish for an instant.** Zen's `setEssentialTabIcon()` does `getAttribute("image") ?? ""`, so while a tab is loading it literally writes `url()`. Activating a split loads the pending panes, so that empty value lands exactly when the tile is being repainted. The mod treats an empty `url()` as no icon, falls back to the tab's `image` attribute, and keeps the last good favicon per tab so a blank never reaches the tile.
+- **Favicons that vanish for an instant.** Zen's `setEssentialTabIcon()` does `getAttribute("image") ?? ""`, so while a tab is loading it literally writes `url()`. The mod treats an empty `url()` as no icon, falls back to the tab's `image` attribute, and keeps the last good favicon per tab.
 
 ### 📝 Notes and limitations
 
@@ -257,12 +258,13 @@ Todo lo demás — layout, redimensionar, cerrar un panel, el botón de deshacer
 
 **Persistencia.** El session store de Zen guarda las divisiones por el id del tab-group, y las nuestras no tienen tab-group: se perderían. El mod lleva su propia lista en la preferencia `zen-essentials-split.saved-groups`, identificando cada Essential por *contenedor + origen del sitio*, y rehace los grupos poco después de `AfterWorkspacesSessionRestore` — sin robar la pantalla.
 
-**El azulejo combinado.** Zen ya guarda el favicon de cada Essential como `--zen-essential-tab-icon` en el estilo inline de la pestaña. El script los lee, los escribe en el dueño del azulejo como `--zes-icon-1` … `--zes-icon-4` junto con la posición y el tamaño de cada ranura, y `chrome.css` los pinta con cuatro pseudoelementos (`.tab-background::before/::after` y `.tab-content::before/::after`). A los demás miembros les pone `display: none`: no se cierran ni se descargan, solo dejan de ocupar sitio. Al descargar el mod se retira todo, así que ningún Essential queda oculto.
+**El azulejo combinado.** Zen ya guarda el favicon de cada Essential como `--zen-essential-tab-icon` en el estilo inline de la pestaña. El script los lee y pinta un `<span>` por favicon dentro de un `div.zes-overlay` que inyecta en el `.tab-stack` del azulejo; `chrome.css` solo define el aspecto de esos spans. A los demás miembros les pone `display: none`: no se cierran ni se descargan, solo dejan de ocupar sitio. Al descargar el mod se retira todo, así que ningún Essential queda oculto.
 
-Dos detalles fáciles de equivocar, y que el mod resuelve a propósito:
+Tres detalles fáciles de equivocar, y que el mod resuelve a propósito:
 
+- **Por qué una capa inyectada y no pseudoelementos.** Con `zen.theme.essentials-favicon-bg` —activada de serie— Zen se queda con *los dos* pseudoelementos de `.tab-background` en cuanto el Essential está `[visuallyselected]`: `::before` es la placa opaca del fondo seleccionado y `::after` el favicon desenfocado. Su `inset: 0` pisa la posición de la ranura y su `background` pisa la imagen, así que los iconos dibujados ahí desaparecen en cuanto haces clic en el azulejo. Con un elemento propio no hay nada que compartir con Zen.
 - **Dónde va cada icono.** `group.tabs` es el orden de *creación* y no cambia al reordenar paneles. El orden y la geometría reales están en `group.layoutTree`, donde Zen escribe en cada hoja un `positionToRoot` con los cuatro márgenes de ese panel en porcentajes — los mismos que usa para colocar los browsers. El mosaico los lee, y por eso sigue solo a los cambios de orden y de tamaño.
-- **Favicons que desaparecen un instante.** `setEssentialTabIcon()` de Zen hace `getAttribute("image") ?? ""`, así que mientras una pestaña carga escribe literalmente `url()`. Activar una división carga los paneles pendientes, de modo que ese valor vacío cae justo cuando se repinta el azulejo. El mod trata un `url()` vacío como "sin icono", prueba el atributo `image` de la pestaña, y recuerda el último favicon bueno de cada una para que nunca llegue un hueco al azulejo.
+- **Favicons que desaparecen un instante.** `setEssentialTabIcon()` de Zen hace `getAttribute("image") ?? ""`, así que mientras una pestaña carga escribe literalmente `url()`. El mod trata un `url()` vacío como "sin icono", prueba el atributo `image` de la pestaña, y recuerda el último favicon bueno de cada una.
 
 ### 📝 Notas y limitaciones
 
