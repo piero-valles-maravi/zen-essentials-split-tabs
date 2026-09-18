@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 300" width="900" height="300" role="img" aria-label="Los cuatro modos de azulejo">
+  <defs>
+    <style>
+      .h    { font-family:'Segoe UI',Ubuntu,system-ui,sans-serif; fill:#0F172A; font-weight:700; }
+      .lab  { font-family:'Segoe UI',Ubuntu,system-ui,sans-serif; fill:#1E3A8A; font-weight:600; }
+      .desc { font-family:'Segoe UI',Ubuntu,system-ui,sans-serif; fill:#475569; }
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="900" height="300" rx="20" fill="#EFF6FF"/>
+  <text class="h" x="40" y="50" font-size="24">Cómo se ve un grupo de 4 en la barra</text>
+
+  <!-- A · Mosaico -->
+  <g transform="translate(60,84)">
+    <rect x="0" y="0" width="84" height="84" rx="20" fill="#ffffff" stroke="#BFDBFE" stroke-width="2"/>
+    <circle cx="25" cy="25" r="13" fill="#1D9E75"/>
+    <circle cx="59" cy="25" r="13" fill="#378ADD"/>
+    <circle cx="25" cy="59" r="13" fill="#D85A30"/>
+    <circle cx="59" cy="59" r="13" fill="#7F77DD"/>
+    <text class="lab" x="42" y="116" font-size="15" text-anchor="middle">A · Mosaico</text>
+    <text class="desc" x="42" y="138" font-size="13" text-anchor="middle">los iconos en rejilla</text>
+  </g>
+
+  <!-- B · Solapados -->
+  <g transform="translate(270,84)">
+    <rect x="0" y="0" width="84" height="84" rx="20" fill="#ffffff" stroke="#BFDBFE" stroke-width="2"/>
+    <circle cx="24" cy="27" r="14" fill="#1D9E75" stroke="#ffffff" stroke-width="3"/>
+    <circle cx="36" cy="37" r="14" fill="#378ADD" stroke="#ffffff" stroke-width="3"/>
+    <circle cx="48" cy="47" r="14" fill="#D85A30" stroke="#ffffff" stroke-width="3"/>
+    <circle cx="60" cy="57" r="14" fill="#7F77DD" stroke="#ffffff" stroke-width="3"/>
+    <text class="lab" x="42" y="116" font-size="15" text-anchor="middle">B · Solapados</text>
+    <text class="desc" x="42" y="138" font-size="13" text-anchor="middle">los iconos en pila</text>
+  </g>
+
+  <!-- C · Principal + insignias -->
+  <g transform="translate(480,84)">
+    <rect x="0" y="0" width="84" height="84" rx="20" fill="#ffffff" stroke="#BFDBFE" stroke-width="2"/>
+    <circle cx="39" cy="35" r="19" fill="#1D9E75"/>
+    <circle cx="66" cy="66" r="9" fill="#378ADD" stroke="#ffffff" stroke-width="2.5"/>
+    <circle cx="47" cy="68" r="9" fill="#D85A30" stroke="#ffffff" stroke-width="2.5"/>
+    <circle cx="29" cy="68" r="9" fill="#7F77DD" stroke="#ffffff" stroke-width="2.5"/>
+    <text class="lab" x="42" y="116" font-size="15" text-anchor="middle">C · Principal + insignias</text>
+    <text class="desc" x="42" y="138" font-size="13" text-anchor="middle">uno grande, el resto pequeño</text>
+  </g>
+
+  <!-- D · Azulejos separados -->
+  <g transform="translate(690,84)">
+    <rect x="0"  y="0"  width="38" height="38" rx="10" fill="#ffffff" stroke="#BFDBFE" stroke-width="2"/>
+    <circle cx="19" cy="16" r="9" fill="#1D9E75"/>
+    <rect x="13" y="28" width="12" height="4" rx="2" fill="#38BDF8"/>
+
+    <rect x="46" y="0"  width="38" height="38" rx="10" fill="#ffffff" stroke="#BFDBFE" stroke-width="2"/>
+    <circle cx="65" cy="16" r="9" fill="#378ADD"/>
+    <rect x="59" y="28" width="12" height="4" rx="2" fill="#38BDF8"/>
+
+    <rect x="0"  y="46" width="38" height="38" rx="10" fill="#ffffff" stroke="#BFDBFE" stroke-width="2"/>
+    <circle cx="19" cy="62" r="9" fill="#D85A30"/>
+    <rect x="13" y="74" width="12" height="4" rx="2" fill="#38BDF8"/>
+
+    <rect x="46" y="46" width="38" height="38" rx="10" fill="#ffffff" stroke="#BFDBFE" stroke-width="2"/>
+    <circle cx="65" cy="62" r="9" fill="#7F77DD"/>
+    <rect x="59" y="74" width="12" height="4" rx="2" fill="#38BDF8"/>
+
+    <text class="lab" x="42" y="116" font-size="15" text-anchor="middle">D · Azulejos separados</text>
+    <text class="desc" x="42" y="138" font-size="13" text-anchor="middle">uno por sitio, con su barrita</text>
+  </g>
+
+  <text class="desc" x="450" y="268" font-size="13" text-anchor="middle">En A, B y C los miembros sobrantes se ocultan de la barra: sus iconos ya están dentro del azulejo del primero.</text>
+</svg>

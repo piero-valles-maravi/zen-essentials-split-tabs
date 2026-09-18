@@ -1,56 +1,92 @@
 [
   {
     "type": "separator",
-    "label": "Comportamiento"
+    "label": "Group appearance · Apariencia del grupo"
   },
   {
-    "property": "mod.essentials-split.layout",
-    "label": "Disposición por defecto de las divisiones nuevas",
+    "property": "mod.essentials-split.tile",
+    "label": "How a group looks in the sidebar · Cómo se ve un grupo en la barra",
     "type": "dropdown",
     "placeholder": false,
-    "defaultValue": "grid",
+    "defaultValue": "mosaic",
     "options": [
-      { "value": "grid", "label": "Cuadrícula (automática)" },
-      { "value": "vsep", "label": "Lado a lado (columnas)" },
-      { "value": "hsep", "label": "Arriba y abajo (filas)" }
+      { "value": "mosaic", "label": "Mosaic — icons in a grid · Mosaico" },
+      { "value": "stack", "label": "Stacked — overlapping icons · Solapados" },
+      { "value": "badges", "label": "Main icon + badges · Principal + insignias" },
+      { "value": "separate", "label": "Separate tiles, one per site · Azulejos separados" }
     ]
   },
   {
-    "property": "mod.essentials-split.remember",
-    "label": "Recordar las divisiones al reiniciar Zen",
-    "type": "checkbox",
-    "defaultValue": true
-  },
-  {
-    "type": "separator",
-    "label": "Apariencia"
-  },
-  {
     "property": "mod.essentials-split.indicator",
-    "label": "Marcar con un punto los Essentials que pertenecen a una división",
+    "label": "Mark which Essentials are grouped · Marcar los Essentials agrupados",
     "type": "checkbox",
     "defaultValue": true
   },
   {
     "property": "mod.essentials-split.indicator-color",
-    "label": "Color del punto — cualquier color CSS, ej. #38BDF8",
+    "label": "Mark colour — any CSS colour · Color de la marca, ej. #38BDF8",
     "type": "string",
     "border": "value",
-    "defaultValue": "#38BDF8"
+    "defaultValue": "#38BDF8",
+    "conditions": [
+      {
+        "if": {
+          "property": "mod.essentials-split.indicator",
+          "value": true
+        }
+      }
+    ]
   },
   {
     "property": "mod.essentials-split.indicator-size",
-    "label": "Tamaño del punto (px) — solo el número, ej. 5",
+    "label": "Dot size in px — number only · Tamaño del punto, ej. 5",
     "type": "string",
-    "defaultValue": "5"
+    "defaultValue": "5",
+    "operator": "AND",
+    "conditions": [
+      {
+        "if": {
+          "property": "mod.essentials-split.indicator",
+          "value": true
+        }
+      },
+      {
+        "if": {
+          "property": "mod.essentials-split.tile",
+          "value": "separate"
+        }
+      }
+    ]
   },
   {
     "type": "separator",
-    "label": "Avanzado"
+    "label": "Behaviour · Comportamiento"
+  },
+  {
+    "property": "mod.essentials-split.layout",
+    "label": "Default layout for new splits · Disposición por defecto",
+    "type": "dropdown",
+    "placeholder": false,
+    "defaultValue": "grid",
+    "options": [
+      { "value": "grid", "label": "Grid, automatic · Cuadrícula" },
+      { "value": "vsep", "label": "Side by side, columns · Lado a lado" },
+      { "value": "hsep", "label": "Stacked, rows · Arriba y abajo" }
+    ]
+  },
+  {
+    "property": "mod.essentials-split.remember",
+    "label": "Remember splits across restarts · Recordarlas al reiniciar",
+    "type": "checkbox",
+    "defaultValue": true
+  },
+  {
+    "type": "separator",
+    "label": "Advanced · Avanzado"
   },
   {
     "property": "mod.essentials-split.debug",
-    "label": "Escribir mensajes de diagnóstico en la consola del navegador",
+    "label": "Log diagnostics to the browser console · Mensajes de diagnóstico",
     "type": "checkbox"
   }
 ]

@@ -54,14 +54,18 @@
   // nombre del atributo que Zen pone en cada Essential
   const ATTR_ESSENTIAL = "zen-essential";
 
-  // atributos propios del mod, los que lee chrome.css para pintar el punto
+  // atributos propios del mod, los que lee chrome.css
   const ATTR_MARCA = "zes-split";
   const ATTR_MIEMBROS = "zes-split-size";
   const ATTR_ACTIVO = "zes-split-active";
+  const ATTR_AZULEJO = "zes-tile";
+  const ATTR_ANCLA = "zes-tile-anchor";
+  const ATTR_OCULTO = "zes-tile-hidden";
 
-  // preferencias: las cuatro primeras las gestiona Sine, la última es interna
+  // preferencias: las cinco primeras las gestiona Sine, la última es interna
   const PREF = {
     layout: "mod.essentials-split.layout",
+    azulejo: "mod.essentials-split.tile",
     recordar: "mod.essentials-split.remember",
     indicador: "mod.essentials-split.indicator",
     debug: "mod.essentials-split.debug",
@@ -74,6 +78,43 @@
     { valor: "vsep", clave: "ladoALado" },
     { valor: "hsep", clave: "arribaAbajo" },
   ];
+
+  /* Cómo se dibuja un grupo en la barra lateral.
+
+     "separate" deja los Essentials como están y solo les pone la barrita.
+     Los otros tres COLAPSAN el grupo en un azulejo: se oculta a todos los
+     miembros menos al ancla y dentro de esa casilla se pintan los N favicons.
+
+     La tabla da, para cada modo y cada número de miembros, dónde va cada
+     favicon: [x, y, lado], los tres en % del azulejo. El eje va del centro
+     del icono, de ahí el translate(-50%,-50%) del CSS.
+
+     Está en JS y no en CSS a propósito: son 3 modos x 3 tamaños x hasta 4
+     iconos, y como reglas CSS serían decenas de bloques casi iguales. Aquí
+     se lee y se retoca de un vistazo, y chrome.css se queda con cuatro
+     reglas genéricas que leen estas variables. */
+  const DISENOS = {
+    // rejilla: 2 lado a lado, 3 en 2+1, 4 en 2x2
+    mosaic: {
+      2: [[30, 50, 36], [70, 50, 36]],
+      3: [[30, 32, 32], [70, 32, 32], [50, 70, 32]],
+      4: [[30, 30, 32], [70, 30, 32], [30, 70, 32], [70, 70, 32]],
+    },
+
+    // pila en diagonal: cada icono tapa un poco al anterior
+    stack: {
+      2: [[38, 42, 42], [62, 58, 42]],
+      3: [[32, 36, 38], [50, 50, 38], [68, 64, 38]],
+      4: [[28, 32, 34], [42, 44, 34], [58, 56, 34], [72, 68, 34]],
+    },
+
+    // el primero a tamaño normal y el resto como insignias abajo a la derecha
+    badges: {
+      2: [[46, 42, 46], [78, 78, 22]],
+      3: [[46, 42, 46], [78, 78, 22], [56, 80, 22]],
+      4: [[46, 42, 46], [78, 78, 22], [56, 80, 22], [34, 80, 22]],
+    },
+  };
 
   // referencia sin parchear: se guarda ahora porque más abajo se sustituye
   // hasAttribute en elementos concretos y hace falta el original para delegar
@@ -175,6 +216,15 @@
     return DISPOSICIONES.some((d) => d.valor === valor) ? valor : "grid";
   }
 
+  // modo de azulejo elegido; cualquier valor desconocido cae en el mosaico
+  function modoDeAzulejo() {
+    const valor = leerPrefStr(PREF.azulejo, "mosaic");
+    if (valor === "separate") {
+      return "separate";
+    }
+    return DISENOS[valor] ? valor : "mosaic";
+  }
+
 
   /* === 4. Utilidades sobre Essentials ----------------------------------- */
 
@@ -214,6 +264,46 @@
   // tope de paneles: lo dicta Zen (MAX_TABS = 4), no el mod
   function topeDePaneles() {
     return window.gZenViewSplitter?.MAX_TABS || 4;
+  }
+
+  // el favicon de un Essential, ya listo para usarse como background-image
+  function iconoDe(tab) {
+    // 1. Zen guarda el favicon del Essential en el estilo inline de la pestaña,
+    //    y ya viene envuelto en url(...): es la fuente preferente
+    const propia = tab.style.getPropertyValue("--zen-essential-tab-icon").trim();
+    if (propia) {
+      return propia;
+    }
+
+    // 2. Respaldo: el atributo image de la pestaña, que es una URL pelada
+    const imagen = tab.image || tab.getAttribute("image") || "";
+    if (!imagen) {
+      return "";
+    }
+
+    // comillas y barras invertidas escapadas, o la url() se rompería
+    const seguro = imagen.replace(/\\/gu, "\\\\").replace(/"/gu, '\\"');
+    return 'url("' + seguro + '")';
+  }
+
+  // el miembro del grupo que aparece primero en la barra: ahí se dibuja el
+  // azulejo combinado, para que el grupo no salte de sitio
+  function anclaDe(grupo) {
+    const enLaBarra = essentialsDeLaVentana();
+
+    let ancla = null;
+    let posicionMinima = Infinity;
+
+    for (const tab of grupo.tabs) {
+      const posicion = enLaBarra.indexOf(tab);
+
+      if (posicion >= 0 && posicion < posicionMinima) {
+        posicionMinima = posicion;
+        ancla = tab;
+      }
+    }
+
+    return ancla || grupo.tabs[0];
   }
 
   // clave estable de un Essential para recordarlo entre sesiones:
@@ -461,33 +551,99 @@
      El JS solo pone atributos; el punto lo dibuja chrome.css, que además
      lo puede apagar desde las preferencias sin tocar este archivo. */
 
+  // deja una pestaña como si el mod nunca la hubiera tocado
+  function limpiarMarcas(tab) {
+    tab.removeAttribute(ATTR_MARCA);
+    tab.removeAttribute(ATTR_MIEMBROS);
+    tab.removeAttribute(ATTR_ACTIVO);
+    tab.removeAttribute(ATTR_AZULEJO);
+    tab.removeAttribute(ATTR_ANCLA);
+    tab.removeAttribute(ATTR_OCULTO);
+
+    for (let ranura = 1; ranura <= 4; ranura += 1) {
+      tab.style.removeProperty("--zes-icon-" + ranura);
+      tab.style.removeProperty("--zes-x" + ranura);
+      tab.style.removeProperty("--zes-y" + ranura);
+      tab.style.removeProperty("--zes-z" + ranura);
+    }
+  }
+
+  // escribe en el ancla las variables que chrome.css necesita para pintar los
+  // N favicons dentro de una sola casilla
+  function componerAzulejo(ancla, miembros, modo) {
+    const plano = DISENOS[modo]?.[miembros.length];
+    if (!plano) {
+      return;
+    }
+
+    ancla.setAttribute(ATTR_ANCLA, "true");
+
+    for (let ranura = 1; ranura <= miembros.length; ranura += 1) {
+      const [x, y, lado] = plano[ranura - 1];
+
+      // el favicon del miembro que ocupa esta ranura
+      ancla.style.setProperty("--zes-icon-" + ranura, iconoDe(miembros[ranura - 1]));
+
+      // centro del icono dentro del azulejo, en % del propio azulejo
+      ancla.style.setProperty("--zes-x" + ranura, x + "%");
+      ancla.style.setProperty("--zes-y" + ranura, y + "%");
+
+      // lado del icono, también en % del azulejo: así escala con la barra
+      ancla.style.setProperty("--zes-z" + ranura, lado + "%");
+    }
+  }
+
   function marcarEssentials() {
     const splitter = window.gZenViewSplitter;
     if (!splitter) {
       return;
     }
 
-    // 1. grupo que se ve ahora mismo, o null si no hay división en pantalla
+    // 1. Se parte de cero en cada pasada: los grupos cambian y arrastrar marcas
+    //    viejas dejaría iconos fantasma en azulejos que ya no son ancla
+    const essentials = essentialsDeLaVentana();
+    for (const tab of essentials) {
+      limpiarMarcas(tab);
+    }
+
+    // 2. Grupo que se ve ahora mismo, o null si no hay división en pantalla
     const grupoActivo =
       splitter.currentView >= 0 ? splitter._data[splitter.currentView] : null;
 
-    for (const tab of essentialsDeLaVentana()) {
-      const grupo = grupoDe(tab);
+    // 3. Solo interesan los grupos enteramente de Essentials y que sigan en la barra
+    const grupos = (splitter._data || []).filter(
+      (grupo) =>
+        grupo.tabs.length >= 2 &&
+        grupo.tabs.every((tab) => essentials.includes(tab))
+    );
 
-      // 2. pertenece a una división: se marca y se anota de cuántos paneles es
-      if (grupo) {
+    const modo = modoDeAzulejo();
+
+    for (const grupo of grupos) {
+      const miembros = grupo.tabs;
+      const ancla = anclaDe(grupo);
+
+      for (const tab of miembros) {
+        // 3a. marca común a los cuatro modos
         tab.setAttribute(ATTR_MARCA, "true");
-        tab.setAttribute(ATTR_MIEMBROS, String(grupo.tabs.length));
-      } else {
-        tab.removeAttribute(ATTR_MARCA);
-        tab.removeAttribute(ATTR_MIEMBROS);
+        tab.setAttribute(ATTR_MIEMBROS, String(miembros.length));
+        tab.setAttribute(ATTR_AZULEJO, modo);
+
+        if (grupo === grupoActivo) {
+          tab.setAttribute(ATTR_ACTIVO, "true");
+        }
+
+        // 3b. en los modos combinados, todo lo que no es el ancla desaparece
+        //     de la barra: sus iconos ya se dibujan dentro del azulejo del ancla
+        if (modo !== "separate" && tab !== ancla) {
+          tab.setAttribute(ATTR_OCULTO, "true");
+        }
       }
 
-      // 3. además es la división visible: la marca se enciende del todo
-      if (grupo && grupo === grupoActivo) {
-        tab.setAttribute(ATTR_ACTIVO, "true");
-      } else {
-        tab.removeAttribute(ATTR_ACTIVO);
+      // 4. Los favicons se pintan en el orden de los paneles, no en el de la
+      //    barra: así el mosaico se parece a lo que ves en pantalla
+      if (modo !== "separate") {
+        componerAzulejo(ancla, miembros, modo);
       }
     }
   }
@@ -872,16 +1028,52 @@
     guardarGruposDiferido();
   }
 
+  // los favicons llegan tarde y cambian al navegar. Si el que cambió está
+  // dentro de un grupo, hay que repintar el azulejo combinado del ancla
+  let temporizadorRepintado = null;
+
+  function alCambiarAtributos(evento) {
+    const tab = evento.target;
+
+    if (!esEssential(tab) || !grupoDe(tab)) {
+      return;
+    }
+
+    if (temporizadorRepintado) {
+      window.clearTimeout(temporizadorRepintado);
+    }
+    temporizadorRepintado = window.setTimeout(marcarEssentials, 300);
+  }
+
+  // cambiar el modo de azulejo en Sine debe verse al instante
+  const observadorDePrefs = {
+    observe: () => marcarEssentials(),
+  };
+
   function montarEscuchas() {
     window.addEventListener("ZenViewSplitter:SplitViewActivated", alCambiarLaVista);
     window.addEventListener("ZenViewSplitter:SplitViewDeactivated", alCambiarLaVista);
     window.addEventListener("TabClose", alCambiarLaVista);
+    window.addEventListener("TabAttrModified", alCambiarAtributos);
+
+    try {
+      Services.prefs.addObserver(PREF.azulejo, observadorDePrefs);
+    } catch (error) {
+      log("no se pudo observar", PREF.azulejo, error);
+    }
   }
 
   function desmontarEscuchas() {
     window.removeEventListener("ZenViewSplitter:SplitViewActivated", alCambiarLaVista);
     window.removeEventListener("ZenViewSplitter:SplitViewDeactivated", alCambiarLaVista);
     window.removeEventListener("TabClose", alCambiarLaVista);
+    window.removeEventListener("TabAttrModified", alCambiarAtributos);
+
+    try {
+      Services.prefs.removeObserver(PREF.azulejo, observadorDePrefs);
+    } catch (error) {
+      log("no se pudo dejar de observar", PREF.azulejo, error);
+    }
   }
 
 
@@ -931,6 +1123,7 @@
     window.clearTimeout(temporizadorRestauracion);
     window.clearTimeout(temporizadorRespaldo);
     window.clearTimeout(temporizadorGuardado);
+    window.clearTimeout(temporizadorRepintado);
 
     // 2. Interfaz y escuchas
     desmontarEscuchas();
@@ -939,12 +1132,11 @@
     // 3. Parche fuera: Zen vuelve a su comportamiento original
     retirarParche();
 
-    // 4. Marcas visuales fuera; las divisiones en sí se dejan intactas para
-    //    que una recarga en caliente no tire abajo lo que el usuario tenía
+    // 4. Marcas y azulejos combinados fuera, o quedarían Essentials ocultos
+    //    para siempre. Las divisiones en sí se dejan intactas, para que una
+    //    recarga en caliente no tire abajo lo que el usuario tenía montado
     for (const tab of essentialsDeLaVentana()) {
-      tab.removeAttribute(ATTR_MARCA);
-      tab.removeAttribute(ATTR_MIEMBROS);
-      tab.removeAttribute(ATTR_ACTIVO);
+      limpiarMarcas(tab);
     }
 
     delete window.__zenEssentialsSplitTabs;

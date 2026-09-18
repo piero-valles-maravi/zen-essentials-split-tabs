@@ -16,32 +16,29 @@
   <g transform="translate(46,86)">
     <rect x="0" y="0" width="118" height="220" rx="16" fill="#ffffff" stroke="#BFDBFE" stroke-width="2"/>
 
-    <!-- the right-clicked essential -->
+    <!-- the group, collapsed into one mosaic tile -->
     <rect x="14" y="16" width="40" height="40" rx="11" fill="#DBEAFE" stroke="#3B82F6" stroke-width="2"/>
-    <circle cx="34" cy="33" r="9" fill="#22C55E"/>
-    <rect x="27" y="48" width="14" height="4" rx="2" fill="#38BDF8"/>
-
-    <!-- its partner in the split -->
-    <rect x="64" y="16" width="40" height="40" rx="11" fill="#F1F5F9"/>
-    <circle cx="84" cy="33" r="9" fill="#38BDF8"/>
-    <rect x="77" y="48" width="14" height="4" rx="2" fill="#38BDF8"/>
+    <circle cx="27" cy="36" r="8" fill="#22C55E"/>
+    <circle cx="45" cy="36" r="8" fill="#38BDF8"/>
 
     <!-- the rest -->
     <g fill="#F1F5F9">
+      <rect x="64" y="16"  width="40" height="40" rx="11"/>
       <rect x="14" y="66"  width="40" height="40" rx="11"/>
       <rect x="64" y="66"  width="40" height="40" rx="11"/>
       <rect x="14" y="116" width="40" height="40" rx="11"/>
       <rect x="64" y="116" width="40" height="40" rx="11"/>
     </g>
     <g fill="#CBD5E1">
+      <circle cx="84" cy="36"  r="9"/>
       <circle cx="34" cy="86"  r="9"/>
       <circle cx="84" cy="86"  r="9"/>
       <circle cx="34" cy="136" r="9"/>
       <circle cx="84" cy="136" r="9"/>
     </g>
 
-    <text class="desc" x="59" y="196" font-size="12" text-anchor="middle">la barrita marca</text>
-    <text class="desc" x="59" y="211" font-size="12" text-anchor="middle">los que van juntos</text>
+    <text class="desc" x="59" y="196" font-size="12" text-anchor="middle">el grupo ocupa</text>
+    <text class="desc" x="59" y="211" font-size="12" text-anchor="middle">un solo azulejo</text>
   </g>
 
   <!-- pointer -->

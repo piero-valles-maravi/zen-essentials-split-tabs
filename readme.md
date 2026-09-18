@@ -8,7 +8,7 @@
 
 **Agrupa 2, 3 o 4 Essentials para que se abran juntos en la vista dividida de Zen.**
 
-![version](https://img.shields.io/badge/version-1.0.0-1E3A8A)
+![version](https://img.shields.io/badge/version-1.1.0-1E3A8A)
 ![Zen Browser](https://img.shields.io/badge/Zen-Browser-4C1D95)
 ![Sine](https://img.shields.io/badge/Sine-mod-38BDF8)
 ![JS + CSS](https://img.shields.io/badge/JS%20%2B%20CSS-mod-7C3AED)
@@ -32,7 +32,7 @@ This mod fixes that. You tick which Essentials belong together and, from then on
 - **Grid, columns or rows** — pick the layout per group.
 - **Several groups at the same time**: WhatsApp + Telegram in one, Reddit + LinkedIn + X in another.
 - **Remembered across restarts**, which Zen's own session store does not do for Essentials.
-- A **small bar under the icon** marks which Essentials are grouped, and lights up when that group is the one on screen.
+- **One tile for the whole group**: the members collapse into a single square that shows all their favicons, instead of eating one slot each.
 
 Unlike [zen-essentials-compact](https://github.com/piero-valles-maravi/zen-essentials-compact), this one **needs JavaScript** — see [How it works](#-how-it-works) for why, and for exactly what it touches.
 
@@ -84,16 +84,27 @@ The split opens straight away. From now on, clicking any member of the group bri
 
 **Shortcut**: `Ctrl`-click (`Cmd` on macOS) 2–4 Essentials to multi-select them, then right-click → **"Split the N selected Essentials"**.
 
+### 🧩 One tile per group
+
+A group of 4 used to eat 4 slots in the sidebar. By default it now takes **one**: the first member keeps its square and all the favicons are drawn inside it; the rest are hidden from the strip. Four styles to choose from in the preferences:
+
+![The four tile modes](assets/tiles-en.svg)
+
+The layout is expressed entirely in percentages of the tile, so it holds at any sidebar width — and on the square tiles of [zen-essentials-compact](https://github.com/piero-valles-maravi/zen-essentials-compact).
+
+> **What you give up with A, B and C.** Hidden members can't be clicked on their own, so the tile always opens the whole split, and Zen's per-app unread and notification marks only show for the tile's owner. If that matters more than the space, pick **D · Separate tiles** — it keeps every Essential clickable and only adds the little bar.
+
 ### 🎛️ Preferences
 
 | Preference | Default | What it does |
 |---|---|---|
-| **Default layout** | `Grid` | Layout new groups are born with. *Grid* is automatic (with 2 panes it is the same as columns); *columns* puts them side by side; *rows* stacks them. |
+| **How a group looks in the sidebar** | `Mosaic` | Mosaic, stacked, main + badges, or separate tiles. See [One tile per group](#-one-tile-per-group). |
+| **Mark which Essentials are grouped** | on | The bar under the icon in *separate* mode, and the outline around the tile when that group is the one on screen. Off: no mark at all. |
+| **Mark colour** | `#38BDF8` | Any CSS colour. Hidden when the mark is off. |
+| **Dot size** | `5` | Height in px, plain number. Only applies to *separate* mode, so it is hidden in the other three. |
+| **Default layout for new splits** | `Grid` | Layout new groups are born with. *Grid* is automatic (with 2 panes it is the same as columns); *columns* puts them side by side; *rows* stacks them. |
 | **Remember splits across restarts** | on | Saves your groups and rebuilds them a moment after Zen starts. Off: groups last only for the session. |
-| **Mark grouped Essentials with a dot** | on | The little bar under the icon. Off: no visual mark at all. |
-| **Dot colour** | `#38BDF8` | Any CSS colour. |
-| **Dot size** | `5` | Height in px, plain number. The bar gets longer with 3 and 4 panes. |
-| **Diagnostic messages** | off | Logs what the mod does to the browser console. Only useful when reporting a bug. |
+| **Log diagnostics** | off | Writes what the mod does to the browser console. Only useful when reporting a bug. |
 
 ### 🔧 How it works
 
@@ -111,13 +122,16 @@ Everything else — layout, resizing, closing a pane, the unsplit button on the 
 
 **Persistence.** Zen's session store saves splits by tab-group id, and ours have no tab group, so they would be lost. The mod keeps its own list in the pref `zen-essentials-split.saved-groups`, identifying each Essential by *container + site origin*, and rebuilds the groups a moment after `AfterWorkspacesSessionRestore` — without stealing the screen.
 
+**The combined tile.** Zen already stores each Essential's favicon as `--zen-essential-tab-icon` in the tab's inline style. The script reads them, writes them onto the tile's owner as `--zes-icon-1` … `--zes-icon-4` together with the position and size of each slot, and `chrome.css` paints them with four pseudo-elements (`.tab-background::before/::after` and `.tab-content::before/::after`). The other members get `display: none` — they are neither closed nor unloaded, they just stop taking up space. Unloading the mod removes all of it, so no Essential is ever left hidden.
+
 ### 📝 Notes and limitations
 
 - **Essentials only.** Mixing an Essential with a regular tab is not supported here — Zen's own *Split tabs* already does that.
 - **4 panes maximum**, because `gZenViewSplitter.MAX_TABS` is 4. Not a decision of this mod.
 - **Two Essentials on the same site and container can't be told apart** when restoring a session, since the saved key is container + origin. Rare, but if you keep two accounts of the same site as separate Essentials, the group may come back with the wrong one.
-- **It rides on Zen internals.** A Zen release that reworks `ZenViewSplitter` can break it. If that happens, disabling the mod restores stock behaviour with nothing left behind: the patch is removed on unload.
-- **Compatible with [zen-essentials-compact](https://github.com/piero-valles-maravi/zen-essentials-compact)** — one changes the shape of the tiles, the other what happens when you click them. The indicator sits inside the tile background, so it follows the square tiles.
+- **Hidden members lose their individual marks.** In the mosaic, stacked and badge modes, Zen's unread and notification indicators only remain visible for the Essential that owns the tile. With messaging apps this is the real cost of the space you gain — *separate tiles* mode avoids it.
+- **It rides on Zen internals.** A Zen release that reworks `ZenViewSplitter` can break it. If that happens, disabling the mod restores stock behaviour with nothing left behind: both the patch and the combined tiles are removed on unload.
+- **Compatible with [zen-essentials-compact](https://github.com/piero-valles-maravi/zen-essentials-compact)** — one changes the shape of the tiles, the other what happens when you click them. The combined tile is laid out in percentages, so it follows the square tiles at any size.
 - **Also using SuperPins?** It can restyle Essentials too. If the indicator ends up misplaced, adjust the spacing from only one of the two mods.
 
 ### 🔄 Updating
@@ -148,7 +162,7 @@ Este mod lo arregla. Marcas qué Essentials van juntos y, a partir de ahí, **un
 - **Cuadrícula, columnas o filas** — la disposición se elige por grupo.
 - **Varios grupos a la vez**: WhatsApp + Telegram en uno, Reddit + LinkedIn + X en otro.
 - **Se recuerdan al reiniciar**, cosa que el session store de Zen no hace con Essentials.
-- Una **barrita bajo el icono** marca qué Essentials están agrupados y se enciende cuando ese grupo es el que está en pantalla.
+- **Un solo azulejo por grupo**: los miembros se colapsan en un cuadrado que muestra todos sus favicons, en vez de ocupar una casilla cada uno.
 
 A diferencia de [zen-essentials-compact](https://github.com/piero-valles-maravi/zen-essentials-compact), este **necesita JavaScript** — en [Cómo funciona](#-cómo-funciona) está el porqué y exactamente qué toca.
 
@@ -200,15 +214,26 @@ La división se abre al instante. A partir de ahí, un clic en cualquier miembro
 
 **Atajo**: `Ctrl`+clic (`Cmd` en macOS) sobre 2–4 Essentials para multiseleccionarlos, y luego clic derecho → **"Dividir los N Essentials seleccionados"**.
 
+### 🧩 Un azulejo por grupo
+
+Un grupo de 4 ocupaba 4 casillas de la barra. Por defecto ahora ocupa **una**: el primer miembro se queda con su cuadrado y dentro se dibujan todos los favicons; el resto desaparece de la barra. Cuatro estilos a elegir en las preferencias:
+
+![Los cuatro modos de azulejo](assets/tiles.svg)
+
+Todo el diseño está expresado en porcentajes del azulejo, así que aguanta cualquier ancho de barra lateral — y los azulejos cuadrados de [zen-essentials-compact](https://github.com/piero-valles-maravi/zen-essentials-compact).
+
+> **Qué se pierde con A, B y C.** Los miembros ocultos ya no se pueden abrir por separado, así que el azulejo siempre abre la división entera, y los avisos de no leídos y notificaciones de Zen solo se ven en el Essential dueño del azulejo. Si eso te pesa más que el espacio, elige **D · Azulejos separados**: conserva cada Essential clicable y solo añade la barrita.
+
 ### 🎛️ Preferencias
 
 | Preferencia | Por defecto | Qué hace |
 |---|---|---|
+| **Cómo se ve un grupo en la barra** | `Mosaico` | Mosaico, solapados, principal + insignias, o azulejos separados. Ver [Un azulejo por grupo](#-un-azulejo-por-grupo). |
+| **Marcar los Essentials agrupados** | activado | La barrita bajo el icono en el modo *separados*, y el borde alrededor del azulejo cuando ese grupo es el que está en pantalla. Desactivado: ninguna marca. |
+| **Color de la marca** | `#38BDF8` | Cualquier color CSS. Se oculta si la marca está apagada. |
+| **Tamaño del punto** | `5` | Alto en px, solo el número. Solo aplica al modo *separados*, así que se oculta en los otros tres. |
 | **Disposición por defecto** | `Cuadrícula` | Con qué disposición nacen los grupos nuevos. *Cuadrícula* es automática (con 2 paneles equivale a columnas); *columnas* los pone lado a lado; *filas* los apila. |
 | **Recordar las divisiones al reiniciar** | activado | Guarda tus grupos y los rehace poco después de arrancar Zen. Desactivado: los grupos duran solo la sesión. |
-| **Marcar con un punto los Essentials agrupados** | activado | La barrita bajo el icono. Desactivado: ninguna marca visual. |
-| **Color del punto** | `#38BDF8` | Cualquier color CSS. |
-| **Tamaño del punto** | `5` | Alto en px, solo el número. La barra se alarga con 3 y 4 paneles. |
 | **Mensajes de diagnóstico** | desactivado | Escribe en la consola del navegador lo que va haciendo el mod. Útil solo para reportar un fallo. |
 
 ### 🔧 Cómo funciona
@@ -227,13 +252,16 @@ Todo lo demás — layout, redimensionar, cerrar un panel, el botón de deshacer
 
 **Persistencia.** El session store de Zen guarda las divisiones por el id del tab-group, y las nuestras no tienen tab-group: se perderían. El mod lleva su propia lista en la preferencia `zen-essentials-split.saved-groups`, identificando cada Essential por *contenedor + origen del sitio*, y rehace los grupos poco después de `AfterWorkspacesSessionRestore` — sin robar la pantalla.
 
+**El azulejo combinado.** Zen ya guarda el favicon de cada Essential como `--zen-essential-tab-icon` en el estilo inline de la pestaña. El script los lee, los escribe en el dueño del azulejo como `--zes-icon-1` … `--zes-icon-4` junto con la posición y el tamaño de cada ranura, y `chrome.css` los pinta con cuatro pseudoelementos (`.tab-background::before/::after` y `.tab-content::before/::after`). A los demás miembros les pone `display: none`: no se cierran ni se descargan, solo dejan de ocupar sitio. Al descargar el mod se retira todo, así que ningún Essential queda oculto.
+
 ### 📝 Notas y limitaciones
 
 - **Solo entre Essentials.** Mezclar un Essential con una pestaña normal no entra aquí — para eso ya está la opción nativa *Dividir pestañas* de Zen.
 - **Máximo 4 paneles**, porque `gZenViewSplitter.MAX_TABS` vale 4. No es una decisión de este mod.
 - **Dos Essentials del mismo sitio y contenedor no se distinguen** al restaurar la sesión, porque la clave guardada es contenedor + origen. Es raro, pero si tienes dos cuentas del mismo sitio como Essentials separados, el grupo puede volver con el que no era.
-- **Se apoya en las tripas de Zen.** Una versión de Zen que reescriba `ZenViewSplitter` puede romperlo. Si pasa, desactivar el mod devuelve el comportamiento original sin dejar rastro: el parche se retira al descargar.
-- **Compatible con [zen-essentials-compact](https://github.com/piero-valles-maravi/zen-essentials-compact)** — uno cambia la forma de los azulejos y el otro lo que pasa al hacer clic. El indicador va dentro del fondo del azulejo, así que sigue a los azulejos cuadrados.
+- **Los miembros ocultos pierden sus marcas individuales.** En los modos mosaico, solapados e insignias, los avisos de no leídos y notificaciones de Zen solo se ven en el Essential dueño del azulejo. Con apps de mensajería ese es el coste real del espacio que ganas; el modo *azulejos separados* lo evita.
+- **Se apoya en las tripas de Zen.** Una versión de Zen que reescriba `ZenViewSplitter` puede romperlo. Si pasa, desactivar el mod devuelve el comportamiento original sin dejar rastro: se retiran tanto el parche como los azulejos combinados.
+- **Compatible con [zen-essentials-compact](https://github.com/piero-valles-maravi/zen-essentials-compact)** — uno cambia la forma de los azulejos y el otro lo que pasa al hacer clic. El azulejo combinado está medido en porcentajes, así que sigue a los cuadrados a cualquier tamaño.
 - **¿Usas también SuperPins?** También puede reestilizar los Essentials. Si el indicador queda descolocado, ajusta el espaciado desde uno solo de los dos mods.
 
 ### 🔄 Actualización
