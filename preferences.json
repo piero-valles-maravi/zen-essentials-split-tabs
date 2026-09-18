@@ -1,0 +1,56 @@
+[
+  {
+    "type": "separator",
+    "label": "Comportamiento"
+  },
+  {
+    "property": "mod.essentials-split.layout",
+    "label": "Disposición por defecto de las divisiones nuevas",
+    "type": "dropdown",
+    "placeholder": false,
+    "defaultValue": "grid",
+    "options": [
+      { "value": "grid", "label": "Cuadrícula (automática)" },
+      { "value": "vsep", "label": "Lado a lado (columnas)" },
+      { "value": "hsep", "label": "Arriba y abajo (filas)" }
+    ]
+  },
+  {
+    "property": "mod.essentials-split.remember",
+    "label": "Recordar las divisiones al reiniciar Zen",
+    "type": "checkbox",
+    "defaultValue": true
+  },
+  {
+    "type": "separator",
+    "label": "Apariencia"
+  },
+  {
+    "property": "mod.essentials-split.indicator",
+    "label": "Marcar con un punto los Essentials que pertenecen a una división",
+    "type": "checkbox",
+    "defaultValue": true
+  },
+  {
+    "property": "mod.essentials-split.indicator-color",
+    "label": "Color del punto — cualquier color CSS, ej. #38BDF8",
+    "type": "string",
+    "border": "value",
+    "defaultValue": "#38BDF8"
+  },
+  {
+    "property": "mod.essentials-split.indicator-size",
+    "label": "Tamaño del punto (px) — solo el número, ej. 5",
+    "type": "string",
+    "defaultValue": "5"
+  },
+  {
+    "type": "separator",
+    "label": "Avanzado"
+  },
+  {
+    "property": "mod.essentials-split.debug",
+    "label": "Escribir mensajes de diagnóstico en la consola del navegador",
+    "type": "checkbox"
+  }
+]

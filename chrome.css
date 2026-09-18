@@ -1,0 +1,87 @@
+/* ============================================================
+ * Zen Essentials Split Tabs — hoja de estilo
+ *
+ * El trabajo pesado lo hace zen-essentials-split-tabs.uc.js. Este
+ * archivo solo dibuja la marca que distingue, de un vistazo, qué
+ * Essentials forman parte de una vista dividida.
+ *
+ * Los atributos los pone el script en cada Essential:
+ *   zes-split="true"        pertenece a una división
+ *   zes-split-size="2..4"   cuántos paneles tiene esa división
+ *   zes-split-active="true" esa división es la que está en pantalla
+ *
+ * Todo el bloque cuelga de una preferencia de Sine, así que apagar
+ * "Marcar con un punto..." desactiva el indicador sin tocar el CSS.
+ * ============================================================ */
+
+@media (-moz-pref("mod.essentials-split.indicator")) {
+  :root {
+    /* Color de la marca; acepta cualquier color CSS. */
+    --zes-dot-color: var(--mod-essentials-split-indicator-color, #38bdf8);
+
+    /* Alto de la marca. El ancho sale de aquí y del número de paneles. */
+    --zes-dot-size: calc(var(--mod-essentials-split-indicator-size, 5) * 1px);
+
+    /* Separación entre la marca y el borde inferior del azulejo. */
+    --zes-dot-inset: 3px;
+  }
+
+  /* --- Ancla del posicionamiento ---
+     La marca se sitúa contra el fondo visible de la pestaña, no contra
+     el azulejo entero: así queda dentro del redondeo aunque otro mod
+     (por ejemplo zen-essentials-compact) cambie la forma del azulejo. */
+  .zen-essentials-container
+    .tabbrowser-tab[zen-essential][zes-split="true"]
+    .tab-background {
+    position: relative;
+  }
+
+  /* --- La marca ---
+     Una barrita redondeada. Apagada (semitransparente) cuando el grupo
+     existe pero no se está viendo; encendida cuando sí. */
+  .zen-essentials-container
+    .tabbrowser-tab[zen-essential][zes-split="true"]
+    .tab-background::after {
+    content: "";
+    position: absolute;
+    bottom: var(--zes-dot-inset);
+    left: 50%;
+    transform: translateX(-50%);
+
+    /* Dos paneles = un punto; cada panel extra lo alarga un poco. */
+    width: var(--zes-dot-size);
+    height: var(--zes-dot-size);
+
+    border-radius: 999px;
+    background-color: var(--zes-dot-color);
+    opacity: 0.55;
+
+    /* Suaviza el paso de apagada a encendida al cambiar de división. */
+    transition:
+      opacity 120ms ease,
+      width 120ms ease;
+
+    /* La marca es decorativa: no debe robar clics a la pestaña. */
+    pointer-events: none;
+  }
+
+  /* --- Longitud según el número de paneles --- */
+  .zen-essentials-container
+    .tabbrowser-tab[zen-essential][zes-split-size="3"]
+    .tab-background::after {
+    width: calc(var(--zes-dot-size) * 2.2);
+  }
+
+  .zen-essentials-container
+    .tabbrowser-tab[zen-essential][zes-split-size="4"]
+    .tab-background::after {
+    width: calc(var(--zes-dot-size) * 3);
+  }
+
+  /* --- División visible ahora mismo --- */
+  .zen-essentials-container
+    .tabbrowser-tab[zen-essential][zes-split-active="true"]
+    .tab-background::after {
+    opacity: 1;
+  }
+}

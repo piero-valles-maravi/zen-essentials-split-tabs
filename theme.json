@@ -1,0 +1,23 @@
+{
+  "id": "zen-essentials-split-tabs",
+  "name": "Zen Essentials Split Tabs",
+  "description": "Agrupa 2, 3 o 4 Essentials para que se abran juntos en vista dividida con un solo clic.",
+  "author": "pvalles",
+  "version": "1.0.0",
+  "homepage": "https://github.com/piero-valles-maravi/zen-essentials-split-tabs",
+  "tags": ["essentials", "split view", "tabs", "productivity"],
+  "style": {
+    "chrome": "chrome.css",
+    "content": ""
+  },
+  "preferences": "preferences.json",
+  "scripts": {
+    "zen-essentials-split-tabs.uc.js": {
+      "name": "Core script",
+      "description": "Crea, activa y recuerda los grupos de Essentials en vista dividida.",
+      "include": ["chrome://browser/content/browser.xhtml"]
+    }
+  },
+  "supportsUnload": true,
+  "fork": ["zen"]
+}

@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 400" width="900" height="400" role="img" aria-label="How it works: the Essential's context menu">
+  <defs>
+    <style>
+      .h    { font-family:'Segoe UI',Ubuntu,system-ui,sans-serif; fill:#0F172A; font-weight:700; }
+      .lab  { font-family:'Segoe UI',Ubuntu,system-ui,sans-serif; fill:#1E3A8A; font-weight:600; }
+      .desc { font-family:'Segoe UI',Ubuntu,system-ui,sans-serif; fill:#475569; }
+      .item { font-family:'Segoe UI',Ubuntu,system-ui,sans-serif; fill:#1E293B; }
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="900" height="400" rx="20" fill="#EFF6FF"/>
+  <text class="h" x="40" y="50" font-size="24">Right-click an Essential</text>
+
+  <!-- sidebar -->
+  <g transform="translate(46,86)">
+    <rect x="0" y="0" width="118" height="220" rx="16" fill="#ffffff" stroke="#BFDBFE" stroke-width="2"/>
+
+    <rect x="14" y="16" width="40" height="40" rx="11" fill="#DBEAFE" stroke="#3B82F6" stroke-width="2"/>
+    <circle cx="34" cy="33" r="9" fill="#22C55E"/>
+    <rect x="27" y="48" width="14" height="4" rx="2" fill="#38BDF8"/>
+
+    <rect x="64" y="16" width="40" height="40" rx="11" fill="#F1F5F9"/>
+    <circle cx="84" cy="33" r="9" fill="#38BDF8"/>
+    <rect x="77" y="48" width="14" height="4" rx="2" fill="#38BDF8"/>
+
+    <g fill="#F1F5F9">
+      <rect x="14" y="66"  width="40" height="40" rx="11"/>
+      <rect x="64" y="66"  width="40" height="40" rx="11"/>
+      <rect x="14" y="116" width="40" height="40" rx="11"/>
+      <rect x="64" y="116" width="40" height="40" rx="11"/>
+    </g>
+    <g fill="#CBD5E1">
+      <circle cx="34" cy="86"  r="9"/>
+      <circle cx="84" cy="86"  r="9"/>
+      <circle cx="34" cy="136" r="9"/>
+      <circle cx="84" cy="136" r="9"/>
+    </g>
+
+    <text class="desc" x="59" y="196" font-size="12" text-anchor="middle">the small bar marks</text>
+    <text class="desc" x="59" y="211" font-size="12" text-anchor="middle">the ones grouped</text>
+  </g>
+
+  <!-- pointer -->
+  <path d="M172 118 H206" stroke="#3B82F6" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M206 118 l-10 -6 v12 z" fill="#3B82F6"/>
+
+  <!-- context menu -->
+  <g transform="translate(216,86)">
+    <rect x="0" y="0" width="330" height="264" rx="12" fill="#ffffff" stroke="#CBD5E1" stroke-width="1.5"/>
+
+    <rect x="6" y="8" width="318" height="30" rx="8" fill="#DBEAFE"/>
+    <text class="lab" x="20" y="28" font-size="14">Split with another Essential</text>
+    <path d="M300 17 l8 6 -8 6" fill="none" stroke="#1E3A8A" stroke-width="2" stroke-linecap="round"/>
+
+    <line x1="6" y1="48" x2="324" y2="48" stroke="#E2E8F0" stroke-width="1.5"/>
+
+    <g font-size="14">
+      <path d="M22 66 l5 5 9 -11" fill="none" stroke="#2563EB" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <text class="item" x="48" y="71">Telegram Web</text>
+
+      <rect x="20" y="88" width="14" height="14" rx="3" fill="none" stroke="#CBD5E1" stroke-width="2"/>
+      <text class="item" x="48" y="100">Reddit</text>
+
+      <rect x="20" y="117" width="14" height="14" rx="3" fill="none" stroke="#CBD5E1" stroke-width="2"/>
+      <text class="item" x="48" y="129">LinkedIn</text>
+
+      <rect x="20" y="146" width="14" height="14" rx="3" fill="none" stroke="#CBD5E1" stroke-width="2"/>
+      <text class="item" x="48" y="158">Gmail</text>
+    </g>
+
+    <line x1="6" y1="178" x2="324" y2="178" stroke="#E2E8F0" stroke-width="1.5"/>
+
+    <text class="item" x="48" y="201" font-size="14">Layout</text>
+    <path d="M300 192 l8 6 -8 6" fill="none" stroke="#475569" stroke-width="2" stroke-linecap="round"/>
+
+    <text class="item" x="48" y="234" font-size="14">Undo the split</text>
+  </g>
+
+  <!-- explanation -->
+  <g transform="translate(578,96)" font-size="14">
+    <circle cx="6" cy="14" r="6" fill="#2563EB"/>
+    <text class="lab" x="24" y="19">Tick the ones you want together</text>
+    <text class="desc" x="24" y="40" font-size="13">up to 4 panes — the cap is Zen&#39;s</text>
+
+    <circle cx="6" cy="84" r="6" fill="#7C3AED"/>
+    <text class="lab" x="24" y="89">Pick a layout</text>
+    <text class="desc" x="24" y="110" font-size="13">grid, columns or rows</text>
+
+    <circle cx="6" cy="154" r="6" fill="#0EA5E9"/>
+    <text class="lab" x="24" y="159">That&#39;s it</text>
+    <text class="desc" x="24" y="180" font-size="13">click any of those Essentials and</text>
+    <text class="desc" x="24" y="198" font-size="13">both (or three, or four) open at</text>
+    <text class="desc" x="24" y="216" font-size="13">once, with no duplicated tabs</text>
+  </g>
+</svg>
