@@ -68,6 +68,7 @@
     azulejo: "mod.essentials-split.tile",
     recordar: "mod.essentials-split.remember",
     indicador: "mod.essentials-split.indicator",
+    halo: "mod.essentials-split.halo",
     debug: "mod.essentials-split.debug",
     grupos: "zen-essentials-split.saved-groups",
   };
@@ -199,18 +200,20 @@
     console.log("[EssentialsSplit]", ...partes);
   }
 
-  // siembra el valor por defecto del indicador si la preferencia aún no existe.
-  // Hace falta porque Sine solo crea sus preferencias cuando abres su panel, y
-  // chrome.css la consulta con @media (-moz-pref(...)): ahí no hay forma de
-  // declarar un valor de respaldo como sí la hay en var(). Sin esto, el punto
-  // no aparecería hasta la primera visita a los ajustes del mod.
+  // siembra los valores por defecto de las preferencias booleanas que aún no
+  // existen. Hace falta porque Sine solo crea sus preferencias cuando abres su
+  // panel, y chrome.css las consulta con @media (-moz-pref(...)): ahí no hay
+  // forma de declarar un respaldo como sí la hay en var(). Sin esto, ni el
+  // punto ni el halo aparecerían hasta la primera visita a los ajustes del mod.
   function sembrarPreferencias() {
-    try {
-      if (Services.prefs.getPrefType(PREF.indicador) === 0) {
-        Services.prefs.setBoolPref(PREF.indicador, true);
+    for (const nombre of [PREF.indicador, PREF.halo]) {
+      try {
+        if (Services.prefs.getPrefType(nombre) === 0) {
+          Services.prefs.setBoolPref(nombre, true);
+        }
+      } catch (error) {
+        log("no se pudo sembrar", nombre, error);
       }
-    } catch (error) {
-      log("no se pudo sembrar", PREF.indicador, error);
     }
   }
 

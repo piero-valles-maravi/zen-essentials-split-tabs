@@ -8,7 +8,7 @@
 
 **Agrupa 2, 3 o 4 Essentials para que se abran juntos en la vista dividida de Zen.**
 
-![version](https://img.shields.io/badge/version-1.1.3-1E3A8A)
+![version](https://img.shields.io/badge/version-1.1.4-1E3A8A)
 ![Zen Browser](https://img.shields.io/badge/Zen-Browser-4C1D95)
 ![Sine](https://img.shields.io/badge/Sine-mod-38BDF8)
 ![JS + CSS](https://img.shields.io/badge/JS%20%2B%20CSS-mod-7C3AED)
@@ -99,6 +99,7 @@ A group of 4 used to eat 4 slots in the sidebar. By default it now takes **one**
 | Preference | Default | What it does |
 |---|---|---|
 | **How a group looks in the sidebar** | `Mosaic` | Mosaic, stacked, main + badges, or separate tiles. See [One tile per group](#-one-tile-per-group). |
+| **Halo around overlapping icons** | on | A faint ring that lifts each icon off the one below it. Only in *stacked* and *main + badges*, where icons overlap; hidden for the other two. |
 | **Mark which Essentials are grouped** | on | The bar under the icon in *separate* mode, and the outline around the tile when that group is the one on screen. Off: no mark at all. |
 | **Mark colour** | `#38BDF8` | Any CSS colour. Hidden when the mark is off. |
 | **Dot size** | `5` | Height in px, plain number. Only applies to *separate* mode, so it is hidden in the other three. |
@@ -235,6 +236,7 @@ Un grupo de 4 ocupaba 4 casillas de la barra. Por defecto ahora ocupa **una**: e
 | Preferencia | Por defecto | Qué hace |
 |---|---|---|
 | **Cómo se ve un grupo en la barra** | `Mosaico` | Mosaico, solapados, principal + insignias, o azulejos separados. Ver [Un azulejo por grupo](#-un-azulejo-por-grupo). |
+| **Halo alrededor de los iconos solapados** | activado | Un anillo tenue que despega cada icono del de abajo. Solo en *solapados* y *principal + insignias*, que son los que los pisan; en los otros dos se oculta. |
 | **Marcar los Essentials agrupados** | activado | La barrita bajo el icono en el modo *separados*, y el borde alrededor del azulejo cuando ese grupo es el que está en pantalla. Desactivado: ninguna marca. |
 | **Color de la marca** | `#38BDF8` | Cualquier color CSS. Se oculta si la marca está apagada. |
 | **Tamaño del punto** | `5` | Alto en px, solo el número. Solo aplica al modo *separados*, así que se oculta en los otros tres. |

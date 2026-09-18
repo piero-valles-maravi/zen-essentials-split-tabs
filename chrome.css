@@ -40,9 +40,21 @@
   /* Separación entre la barrita y el borde inferior del azulejo. */
   --zes-dot-inset: 3px;
 
-  /* Color del halo que separa los iconos solapados del de abajo.
-     light-dark() lo resuelve según el tema claro u oscuro del chrome. */
-  --zes-ring-color: light-dark(#ffffff, #1c1b22);
+  /* Halo que despega un icono del que tiene debajo, en los modos donde se
+     solapan.
+
+     No es un borde decorativo: su trabajo es imitar el fondo del azulejo para
+     que parezca que el icono lo recorta. Por eso NO debe contrastar. Un gris
+     casi negro parecía lo correcto para el tema oscuro, pero los azulejos de
+     Zen son translúcidos sobre el degradado del espacio y quedan bastante más
+     claros: el halo se leía como una línea negra alrededor de cada icono.
+
+     Un blanco muy tenue funciona en los dos temas — opaco sobre fondo claro,
+     y apenas un realce sobre fondo oscuro. */
+  --zes-ring-color: light-dark(rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.18));
+
+  /* Grosor del halo. */
+  --zes-ring-size: 1.5px;
 }
 
 
@@ -101,22 +113,28 @@
   border-radius: 22%;
 }
 
-/* Solapados: el halo del color del fondo es lo que crea la sensación de pila;
-   sin él los iconos se funden entre sí. */
+/* Solapados e insignias: los iconos se pisan, así que van redondos para que la
+   silueta de abajo se adivine. El mosaico no los pisa y se queda limpio. */
 .zen-essentials-container
   .tabbrowser-tab[zes-tile="stack"][zes-tile-anchor="true"]
-  .zes-icon {
-  border-radius: 50%;
-  box-shadow: 0 0 0 2px var(--zes-ring-color);
-}
-
-/* Insignias: las pequeñas también se recortan, para que se lean aunque caigan
-   encima del icono grande. La primera es el icono principal y va limpia. */
+  .zes-icon,
 .zen-essentials-container
   .tabbrowser-tab[zes-tile="badges"][zes-tile-anchor="true"]
   .zes-icon:not(:first-child) {
   border-radius: 50%;
-  box-shadow: 0 0 0 1.5px var(--zes-ring-color);
+}
+
+/* El halo es opcional: sobre algunos fondos ayuda a separar y sobre otros
+   estorba, así que se puede apagar desde las preferencias. */
+@media (-moz-pref("mod.essentials-split.halo")) {
+  .zen-essentials-container
+    .tabbrowser-tab[zes-tile="stack"][zes-tile-anchor="true"]
+    .zes-icon,
+  .zen-essentials-container
+    .tabbrowser-tab[zes-tile="badges"][zes-tile-anchor="true"]
+    .zes-icon:not(:first-child) {
+    box-shadow: 0 0 0 var(--zes-ring-size) var(--zes-ring-color);
+  }
 }
 
 

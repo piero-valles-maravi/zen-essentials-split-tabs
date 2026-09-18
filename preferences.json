@@ -17,6 +17,26 @@
     ]
   },
   {
+    "property": "mod.essentials-split.halo",
+    "label": "Halo around overlapping icons · Halo alrededor de los iconos solapados",
+    "type": "checkbox",
+    "defaultValue": true,
+    "conditions": [
+      {
+        "if": {
+          "property": "mod.essentials-split.tile",
+          "value": "stack"
+        }
+      },
+      {
+        "if": {
+          "property": "mod.essentials-split.tile",
+          "value": "badges"
+        }
+      }
+    ]
+  },
+  {
     "property": "mod.essentials-split.indicator",
     "label": "Mark which Essentials are grouped · Marcar los Essentials agrupados",
     "type": "checkbox",
